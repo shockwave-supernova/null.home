@@ -1,18 +1,45 @@
-What you CAN do:
-  * download the code
-  * modify the code
-  * upload a FREE copy of your software online (Play Store, F-Droid, ...)
-  
-What you MUST do:
-  * if you distribute a free copy of your work online (GitHub, Play Store, F-Droid, ...) you have to specify:
-    # a link to the original project source code
-    # a link to the original project Play Store page (https://play.google.com/store/apps/details?id=ohi.andre.consolelauncher&hl=en)
-    # the name of the original author (Francesco Andreuzzi from Trieste, Italy)
-    
-What you CAN'T do:
-  * upload a PAID copy of your work online
-  * use the name 't-ui' or 'Linux CLI Launcher' to distribute your FREE software (I don't want t-ui to be related to some malware software around the web...)
-  * spam your software excessively under official t-ui channels (Telegram, Reddit, ...).  
-    # Discussion is okay, and also feature hunting
+# null.home
 
-When this doesn't conflict with the GPL License, consider this as a GPL License.
+> **Note:** This is a **fork** of the original T-UI Launcher. The original project is outdated and no longer maintained.
+
+## About this Fork
+I really wanted to run a CLI launcher on my modern device, but the original app hasn't been updated in years and is unstable on newer Android versions (Android 14+).
+
+**My goal is simple:** Make it run and be usable on modern Android devices.
+
+## 🆘 Help Wanted (I hate Java)
+I am actively looking for contributors to help maintain and modernize this codebase.
+
+**Full disclosure:** I absolutely **detest** Java. My background is in **C** and **Rust**, and I work much faster and happier in those languages. Working with Java is a struggle for me, which makes my progress significantly slower than it could be.
+
+If you know Java/Android development and want to help keep this launcher alive, **please send Pull Requests**. If you want to help rewrite components or optimize the code, your help is even more welcome.
+
+---
+
+## Contributing
+**Pull requests** are extremely welcome, especially given my disdain for Java. 
+If you plan to make a major change, please open an Issue first to discuss it.
+
+## How to format a bug report
+1. Open an **Issue** in this repository.
+2. Describe the issue, when it happens, how to reproduce it.
+3. Include your Android version and Device model.
+4. Include any **screenshot** or **logcat** output that you think could help.
+
+## Open source libraries
+* [CompareString2](https://github.com/fAndreuzzi/CompareString2)
+* [OkHttp](https://github.com/square/okhttp)
+* [HTML cleaner](http://htmlcleaner.sourceforge.net/)
+* [JsonPath](https://github.com/json-path/JsonPath)
+* [jsoup](https://github.com/jhy/jsoup/)
+
+---
+
+## ⚖️ Legal Notice & Credits
+Per the original license requirements, full credit goes to the original creator.
+
+* **Original Author:** Francesco Andreuzzi from Trieste, Italy.
+* **Original Source Code:** [GitHub - Andre1299/TUI-ConsoleLauncher](https://github.com/Andre1299/TUI-ConsoleLauncher)
+* **Original App on Play Store:** [T-UI Linux CLI Launcher](https://play.google.com/store/apps/details?id=ohi.andre.consolelauncher&hl=en)
+
+This software is distributed for **FREE**. No paid version exists or will ever exist for this fork.
