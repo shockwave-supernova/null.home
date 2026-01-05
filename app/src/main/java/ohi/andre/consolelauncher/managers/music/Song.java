@@ -1,34 +1,43 @@
 package ohi.andre.consolelauncher.managers.music;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
 import java.io.File;
 
 import it.andreuzzi.comparestring2.StringableObject;
 
 /**
  * Created by francescoandreuzzi on 17/08/2017.
+ * Refactored for stability.
  */
 
-public class Song implements StringableObject  {
+public class Song implements StringableObject {
 
-    private long id;
-    private String title, path, lowercaseTitle;
+    private final long id;
+    private final String title;
+    private final String path;
+    private final String lowercaseTitle;
 
+    // Конструктор для песен из MediaStore (по ID)
     public Song(long songID, String songTitle) {
-        id = songID;
-        title = songTitle;
-        this.lowercaseTitle = title.toLowerCase();
+        this.id = songID;
+        this.title = (songTitle != null) ? songTitle : "Unknown Track";
+        this.path = null; // Для MediaStore путь не нужен, используем URI
+        this.lowercaseTitle = this.title.toLowerCase();
     }
 
+    // Конструктор для песен из файлов (File Explorer)
     public Song(File file) {
         String name = file.getName();
         int dot = name.lastIndexOf(".");
-        name = name.substring(0,dot);
+        
+        // Безопасное удаление расширения файла
+        if (dot > 0) {
+            name = name.substring(0, dot);
+        }
 
         this.title = name;
         this.path = file.getAbsolutePath();
-        this.id = -1;
+        this.id = -1; // -1 используется как флаг того, что это файл, а не ID из базы данных
+        this.lowercaseTitle = this.title.toLowerCase();
     }
 
     public long getID() {
@@ -43,6 +52,7 @@ public class Song implements StringableObject  {
         return path;
     }
 
+    // Реализация интерфейса StringableObject для сортировки и поиска в T-UI
     @Override
     public String getLowercaseString() {
         return lowercaseTitle;
@@ -52,5 +62,9 @@ public class Song implements StringableObject  {
     public String getString() {
         return title;
     }
-}
 
+    @Override
+    public String toString() {
+        return title;
+    }
+}

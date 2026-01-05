@@ -1,10 +1,9 @@
 package ohi.andre.consolelauncher.managers.music;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -21,230 +20,65 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import ohi.andre.consolelauncher.managers.xml.XMLPrefsManager;
 import ohi.andre.consolelauncher.managers.xml.options.Behavior;
-import ohi.andre.consolelauncher.tuils.StoppableThread;
 import ohi.andre.consolelauncher.tuils.Tuils;
 
 /**
  * Created by francescoandreuzzi on 17/08/2017.
+ * Updated/Refactored for modern Android standards.
  */
 
 public class MusicManager2 implements MediaController.MediaPlayerControl {
 
-    public static final String[] MUSIC_EXTENSIONS = {".mp3", ".wav", ".ogg", ".flac"};
+    public static final String[] MUSIC_EXTENSIONS = {".mp3", ".wav", ".ogg", ".flac", ".m4a", ".aac"};
 
-    final int WAITING_NEXT = 10, WAITING_PREVIOUS = 11, WAITING_PLAY = 12, WAITING_LISTEN = 13;
+    private static final int WAITING_NEXT = 10;
+    private static final int WAITING_PREVIOUS = 11;
+    private static final int WAITING_PLAY = 12;
+    private static final int WAITING_LISTEN = 13;
 
-    Context mContext;
+    private final Context mContext;
+    private final List<Song> songs = new ArrayList<>();
 
-    List<Song> songs;
+    private MusicService musicSrv;
+    private boolean musicBound = false;
+    private Intent playIntent;
 
-    MusicService musicSrv;
-    boolean musicBound=false;
-    Intent playIntent;
+    private boolean playbackPaused = true;
+    private boolean stopped = true;
 
-    boolean playbackPaused=true, stopped = true;
+    // Используем Executor вместо Thread для переиспользования потоков
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    Thread loader;
+    private int waitingMethod = 0;
+    private String savedParam;
 
-    int waitingMethod = 0;
-    String savedParam;
-
-    BroadcastReceiver headsetBroadcast;
-
-    public MusicManager2(Context c) {
-        mContext = c;
-        updateSongs();
-
-        headsetBroadcast = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (intent.getIntExtra("state", 0) == 0) pause();
+    private final BroadcastReceiver headsetBroadcast = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // 0 = unplugged, 1 = plugged
+            if (intent.getIntExtra("state", -1) == 0) {
+                pause();
             }
-        };
-
-        String action;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            action = AudioManager.ACTION_HEADSET_PLUG;
-        } else {
-            action = Intent.ACTION_HEADSET_PLUG;
         }
+    };
 
-        mContext.getApplicationContext().registerReceiver(headsetBroadcast, new IntentFilter(action));
-
-        init();
-    }
-
-    public void init() {
-        playIntent = new Intent(mContext, MusicService.class);
-        mContext.bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
-        mContext.startService(playIntent);
-    }
-
-    public void refresh() {
-        destroy();
-        updateSongs();
-    }
-
-    public void destroy() {
-        if(musicSrv != null && musicBound) {
-            musicSrv.stop();
-            mContext.unbindService(musicConnection);
-            mContext.stopService(playIntent);
-            musicSrv = null;
-        }
-
-        try {
-            mContext.getApplicationContext().unregisterReceiver(headsetBroadcast);
-        } catch (Exception e) {
-            Tuils.log(e);
-        }
-
-        musicBound = false;
-        playbackPaused = true;
-        stopped = true;
-    }
-
-    public String playNext() {
-        if(!musicBound) {
-            init();
-            waitingMethod = WAITING_NEXT;
-
-            return null;
-        }
-
-        playbackPaused=false;
-        stopped = false;
-
-        return musicSrv.playNext();
-    }
-
-    public String playPrev() {
-        if(!musicBound) {
-            init();
-            waitingMethod = WAITING_PREVIOUS;
-
-            return null;
-        }
-
-        playbackPaused = false;
-        stopped = false;
-
-        return musicSrv.playPrev();
-    }
-
-    @Override
-    public void pause() {
-        if(musicSrv == null || playbackPaused) return;
-
-        playbackPaused=true;
-        musicSrv.pausePlayer();
-    }
-
-    public String play() {
-        if(!musicBound) {
-            init();
-            waitingMethod = WAITING_PLAY;
-
-            return null;
-        }
-
-        if(stopped) {
-            musicSrv.playSong();
-            playbackPaused = false;
-            stopped = false;
-        } else if(playbackPaused) {
-            playbackPaused = false;
-            musicSrv.playPlayer();
-        } else pause();
-
-        return null;
-    }
-
-    public String lsSongs() {
-        if(songs.size() == 0) return "[]";
-
-        List<String> ss = new ArrayList<>();
-        for(Song s : songs) {
-            ss.add(s.getTitle());
-        }
-
-        Collections.sort(ss);
-        Tuils.addPrefix(ss, Tuils.DOUBLE_SPACE);
-        Tuils.insertHeaders(ss, false);
-
-        return Tuils.toPlanString(ss, Tuils.NEWLINE);
-    }
-
-    public void updateSongs() {
-        loader = new StoppableThread() {
-            @Override
-            public void run() {
-                try {
-                    if(songs == null) songs = new ArrayList<>();
-                    else songs.clear();
-
-                    if(XMLPrefsManager.getBoolean(Behavior.songs_from_mediastore)) {
-                        ContentResolver musicResolver = mContext.getContentResolver();
-                        Uri musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-                        Cursor musicCursor = musicResolver.query(musicUri, null, null, null, null);
-                        if(musicCursor!=null && musicCursor.moveToFirst()){
-                            int titleColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
-                            int idColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media._ID);
-                            do {
-                                long thisId = musicCursor.getLong(idColumn);
-                                String thisTitle = musicCursor.getString(titleColumn);
-                                songs.add(new Song(thisId, thisTitle));
-                            }
-                            while (musicCursor.moveToNext());
-                        }
-                        musicCursor.close();
-                    } else {
-                        String path = XMLPrefsManager.get(Behavior.songs_folder);
-                        if(path.length() == 0) return;
-
-                        File file;
-                        if(path.startsWith(File.separator)) {
-                            file = new File(path);
-                        } else {
-                            file = new File(XMLPrefsManager.get(Behavior.home_path), path);
-                        }
-
-                        if(file.exists() && file.isDirectory()) songs.addAll(Tuils.getSongsInFolder(file));
-                    }
-                } catch (Exception e) {
-                    Tuils.toFile(e);
-                }
-
-                synchronized (songs) {
-                    songs.notify();
-                }
-            }
-        };
-        loader.start();
-    }
-
-    private ServiceConnection musicConnection = new ServiceConnection(){
-
+    private final ServiceConnection musicConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            MusicService.MusicBinder binder = (MusicService.MusicBinder)service;
+            MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
             musicSrv = binder.getService();
             musicSrv.setShuffle(XMLPrefsManager.getBoolean(Behavior.random_play));
-
-            if(loader.isAlive()) {
-                synchronized (songs) {
-                    try {
-                        songs.wait();
-                    } catch (InterruptedException e) {}
-                }
-            }
-
+            
+            // Передаем песни в сервис
             musicSrv.setList(songs);
             musicBound = true;
 
+            // Выполняем отложенное действие
             switch (waitingMethod) {
                 case WAITING_NEXT:
                     playNext();
@@ -270,6 +104,226 @@ public class MusicManager2 implements MediaController.MediaPlayerControl {
         }
     };
 
+    public MusicManager2(Context c) {
+        // Используем Application Context для ресивера, чтобы избежать утечек
+        mContext = c.getApplicationContext(); 
+        
+        updateSongs();
+
+        String action = AudioManager.ACTION_HEADSET_PLUG;
+        // Регистрация ресивера. На новых Android лучше делать это динамически, но для наушников это работает.
+        // Используем флаг экспорта для Android 14+ если потребуется, но для системных экшенов это обычно не нужно в этом контексте
+        try {
+            mContext.registerReceiver(headsetBroadcast, new IntentFilter(action));
+        } catch (Exception e) {
+            Tuils.log(e);
+        }
+
+        init();
+    }
+
+    public void init() {
+        if (playIntent == null) {
+            playIntent = new Intent(mContext, MusicService.class);
+            try {
+                mContext.bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    mContext.startForegroundService(playIntent);
+                } else {
+                    mContext.startService(playIntent);
+                }
+            } catch (Exception e) {
+                Tuils.log("MusicManager init error: " + e.getMessage());
+            }
+        }
+    }
+
+    public void refresh() {
+        // Не обязательно полностью уничтожать сервис для обновления списка песен
+        updateSongs();
+    }
+
+    public void destroy() {
+        if (musicSrv != null && musicBound) {
+            // Останавливаем сервис только если это действительно нужно
+            // musicSrv.stop(); // Обычно мы хотим, чтобы музыка играла в фоне
+            try {
+                mContext.unbindService(musicConnection);
+            } catch (Exception e) {
+                Tuils.log(e);
+            }
+            musicBound = false;
+        }
+        
+        // playIntent не останавливаем, чтобы музыка играла при выходе из лаунчера (если так задумано)
+        // Если нужно убить музыку при выходе - раскомментируйте:
+        /*
+        if (playIntent != null) {
+            mContext.stopService(playIntent);
+            playIntent = null;
+        }
+        */
+
+        try {
+            mContext.unregisterReceiver(headsetBroadcast);
+        } catch (IllegalArgumentException e) {
+            // Ресивер не был зарегистрирован или уже удален
+        } catch (Exception e) {
+            Tuils.log(e);
+        }
+
+        musicSrv = null;
+    }
+
+    public String playNext() {
+        if (!musicBound) {
+            init();
+            waitingMethod = WAITING_NEXT;
+            return null;
+        }
+
+        playbackPaused = false;
+        stopped = false;
+        return musicSrv.playNext();
+    }
+
+    public String playPrev() {
+        if (!musicBound) {
+            init();
+            waitingMethod = WAITING_PREVIOUS;
+            return null;
+        }
+
+        playbackPaused = false;
+        stopped = false;
+        return musicSrv.playPrev();
+    }
+
+    @Override
+    public void pause() {
+        if (musicSrv == null) return;
+        playbackPaused = true;
+        musicSrv.pausePlayer();
+    }
+
+    public String play() {
+        if (!musicBound) {
+            init();
+            waitingMethod = WAITING_PLAY;
+            return null;
+        }
+
+        if (stopped) {
+            musicSrv.playSong();
+            playbackPaused = false;
+            stopped = false;
+        } else if (playbackPaused) {
+            playbackPaused = false;
+            musicSrv.playPlayer();
+        } else {
+            pause();
+        }
+
+        return null;
+    }
+
+    public String lsSongs() {
+        if (songs.isEmpty()) return "[]";
+
+        List<String> ss = new ArrayList<>();
+        for (Song s : songs) {
+            ss.add(s.getTitle());
+        }
+
+        Collections.sort(ss, String::compareToIgnoreCase);
+        Tuils.addPrefix(ss, Tuils.DOUBLE_SPACE);
+        Tuils.insertHeaders(ss, false);
+
+        return Tuils.toPlanString(ss, Tuils.NEWLINE);
+    }
+
+    public void updateSongs() {
+        executor.submit(() -> {
+            try {
+                List<Song> loadedSongs = new ArrayList<>();
+
+                if (XMLPrefsManager.getBoolean(Behavior.songs_from_mediastore)) {
+                    loadFromMediaStore(loadedSongs);
+                } else {
+                    String path = XMLPrefsManager.get(Behavior.songs_folder);
+                    if (path.length() > 0) {
+                        File file;
+                        if (path.startsWith(File.separator)) {
+                            file = new File(path);
+                        } else {
+                            file = new File(XMLPrefsManager.get(File.class, Behavior.home_path), path);
+                        }
+
+                        if (file.exists() && file.isDirectory()) {
+                            loadedSongs.addAll(Tuils.getSongsInFolder(file));
+                        }
+                    }
+                }
+
+                // Обновляем список атомарно
+                synchronized (songs) {
+                    songs.clear();
+                    songs.addAll(loadedSongs);
+                }
+                
+                // Если сервис уже подключен, обновляем список и там
+                if (musicSrv != null) {
+                    musicSrv.setList(songs);
+                }
+
+            } catch (Exception e) {
+                Tuils.toFile(e);
+            }
+        });
+    }
+
+    private void loadFromMediaStore(List<Song> targetList) {
+        ContentResolver musicResolver = mContext.getContentResolver();
+        Uri musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        
+        // Проекция для запроса (оптимизация)
+        String[] projection = {
+                MediaStore.Audio.Media._ID,
+                MediaStore.Audio.Media.TITLE,
+                MediaStore.Audio.Media.ARTIST
+        };
+        
+        // Фильтр для музыки
+        String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
+
+        // Сортировка
+        String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
+
+        try (Cursor musicCursor = musicResolver.query(musicUri, projection, selection, null, sortOrder)) {
+            if (musicCursor != null && musicCursor.moveToFirst()) {
+                int titleColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
+                int idColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media._ID);
+                int artistColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
+
+                do {
+                    long thisId = musicCursor.getLong(idColumn);
+                    String thisTitle = musicCursor.getString(titleColumn);
+                    String thisArtist = musicCursor.getString(artistColumn);
+                    
+                    // Создаем URI для проигрывания (полезно для новых API)
+                    Uri contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, thisId);
+                    
+                    // Предполагаем, что Song конструктор принимает (id, title) или (id, title, artist)
+                    // Если в Song нет поля для URI, старый подход с ID тоже сработает, 
+                    // если MusicService умеет с ним работать.
+                    targetList.add(new Song(thisId, thisTitle)); 
+                } while (musicCursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Tuils.log("Error loading from MediaStore: " + e);
+        }
+    }
+
     @Override
     public boolean canPause() {
         return true;
@@ -287,7 +341,7 @@ public class MusicManager2 implements MediaController.MediaPlayerControl {
 
     @Override
     public int getAudioSessionId() {
-        return 0;
+        return musicSrv != null ? musicSrv.getAudioSessionId() : 0;
     }
 
     @Override
@@ -297,69 +351,79 @@ public class MusicManager2 implements MediaController.MediaPlayerControl {
 
     @Override
     public int getCurrentPosition() {
-        if(musicSrv != null && musicBound && musicSrv.isPng())
+        if (musicSrv != null && musicBound && musicSrv.isPng())
             return musicSrv.getPosn();
-        else return -1;
+        else return 0;
     }
 
     @Override
     public int getDuration() {
-        if(musicSrv != null && musicBound && musicSrv.isPng())
+        if (musicSrv != null && musicBound && musicSrv.isPng())
             return musicSrv.getDur();
-        else return -1;
+        else return 0;
     }
 
     public int getSongIndex() {
-        if(musicSrv != null) return musicSrv.getSongIndex();
+        if (musicSrv != null) return musicSrv.getSongIndex();
         return -1;
     }
 
     @Override
     public boolean isPlaying() {
-        if(musicSrv != null && musicBound)
+        if (musicSrv != null && musicBound)
             return musicSrv.isPng();
         return false;
     }
 
     public void stop() {
-        destroy();
+        if (musicSrv != null) musicSrv.pausePlayer();
+        playbackPaused = true;
+        stopped = true;
     }
 
     public Song get(int index) {
-        if(index < 0 || index >= songs.size()) return null;
+        if (index < 0 || index >= songs.size()) return null;
         return songs.get(index);
     }
 
     @Override
     public void seekTo(int pos) {
-        musicSrv.seek(pos);
+        if (musicSrv != null) musicSrv.seek(pos);
     }
 
     public void select(String song) {
-        if(!musicBound) {
+        if (!musicBound) {
             init();
             waitingMethod = WAITING_LISTEN;
             savedParam = song;
-
             return;
         }
 
         int i = -1;
-        for(int index = 0; index < songs.size(); index++) {
-            if(songs.get(index).getTitle().equals(song)) i = index;
+        // Поиск песни. Можно оптимизировать Map-ом, если песен много, 
+        // но для списка в пару сотен линейный поиск OK.
+        for (int index = 0; index < songs.size(); index++) {
+            if (songs.get(index).getTitle().equalsIgnoreCase(song)) { // equalsIgnoreCase лучше для поиска
+                i = index;
+                break;
+            }
         }
 
-        if(i == -1) {
-            return;
+        if (i != -1) {
+            musicSrv.setSong(i);
+            musicSrv.playSong();
+            playbackPaused = false;
+            stopped = false;
         }
-
-        musicSrv.setSong(i);
-        musicSrv.playSong();
     }
 
     @Override
     public void start() {
-        musicSrv.go();
+        if (musicSrv != null) {
+            musicSrv.go();
+            playbackPaused = false;
+            stopped = false;
+        }
     }
 
     public List<Song> getSongs() {
