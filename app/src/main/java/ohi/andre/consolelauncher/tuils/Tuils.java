@@ -397,16 +397,29 @@ public class Tuils {
     }
 
     public static void resetPreferredLauncherAndOpenChooser(Context context) {
-        PackageManager packageManager = context.getPackageManager();
-        ComponentName componentName = new ComponentName(context, FakeLauncherActivity.class);
-        packageManager.setComponentEnabledSetting(componentName, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+        try {
+            PackageManager packageManager = context.getPackageManager();
+            ComponentName componentName = new ComponentName(context, FakeLauncherActivity.class);
 
-        Intent selector = new Intent(Intent.ACTION_MAIN);
-        selector.addCategory(Intent.CATEGORY_HOME);
-        selector.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(selector);
+            // Включаем фейковую активность
+            packageManager.setComponentEnabledSetting(componentName, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
 
-        packageManager.setComponentEnabledSetting(componentName, PackageManager.COMPONENT_ENABLED_STATE_DEFAULT, PackageManager.DONT_KILL_APP);
+            // Отправляем пользователя на выбор домашнего экрана
+            Intent selector = new Intent(Intent.ACTION_MAIN);
+            selector.addCategory(Intent.CATEGORY_HOME);
+            selector.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(selector);
+
+            // Сразу выключаем её обратно
+            packageManager.setComponentEnabledSetting(componentName, PackageManager.COMPONENT_ENABLED_STATE_DEFAULT, PackageManager.DONT_KILL_APP);
+        } catch (Exception e) {
+            Tuils.log(e);
+            // Если не сработал хак (например, класс не найден в манифесте), просто выходим на рабочий стол
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        }
     }
 
     @TargetApi(Build.VERSION_CODES.GINGERBREAD)
@@ -1020,8 +1033,6 @@ public class Tuils {
     }
 
     public static void log(Object o) {
-//        Log.e("andre", Arrays.toString(Thread.currentThread().getStackTrace()));
-
         if(o instanceof Throwable) {
             Log.e("andre", "", (Throwable) o);
         } else {
@@ -1041,8 +1052,6 @@ public class Tuils {
     }
 
     public static void log(Object o, PrintStream to) {
-//        Log.e("andre", Arrays.toString(Thread.currentThread().getStackTrace()));
-
         if(o instanceof Throwable) {
             ((Throwable) o).printStackTrace(to);
         } else {
@@ -1099,17 +1108,6 @@ public class Tuils {
 
     public static void toFile(Object o) {
         if(o == null) return;
-
-//            RandomAccessFile f = new RandomAccessFile(new File(Tuils.getFolder(), "crash.txt"), "rw");
-//            f.seek(0);
-//            f.write((new Date().toString() + Tuils.NEWLINE + Tuils.NEWLINE).getBytes());
-//            OutputStream is = Channels.newOutputStream(f.getChannel());
-//            e.printStackTrace(new PrintStream(is));
-//            f.write((Tuils.NEWLINE + Tuils.NEWLINE).getBytes());
-//
-//            is.close();
-//            f.close();
-
         try {
             FileOutputStream stream = new FileOutputStream(new File(Tuils.getFolder(), "crash.txt"));
             stream.write((Tuils.NEWLINE + Tuils.NEWLINE).getBytes());
@@ -1210,7 +1208,6 @@ public class Tuils {
         return true;
     }
 
-//    return 0 if only digit
     public static char firstNonDigit(String s) {
         if(s == null) {
             return 0;
