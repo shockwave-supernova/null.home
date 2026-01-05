@@ -74,17 +74,14 @@ public class MusicService extends Service implements
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (songTitle == null || songTitle.isEmpty()) {
-            return START_STICKY;
-        }
+        // === ИСПРАВЛЕНИЕ КРАША ===
+        // Мы ОБЯЗАНЫ показать уведомление в течение 5 секунд, даже если песня не играет.
+        String displayTitle = (songTitle == null || songTitle.isEmpty()) ? "T-UI Music" : songTitle;
 
-        if (System.currentTimeMillis() - lastNotificationChange > 500) {
-            lastNotificationChange = System.currentTimeMillis();
-            try {
-                startForeground(NOTIFY_ID, buildNotification(this, songTitle));
-            } catch (Exception e) {
-                Tuils.log(e);
-            }
+        try {
+            startForeground(NOTIFY_ID, buildNotification(this, displayTitle));
+        } catch (Exception e) {
+            Tuils.log(e);
         }
         
         return START_STICKY;
@@ -92,8 +89,6 @@ public class MusicService extends Service implements
 
     @Override
     public void onPrepared(MediaPlayer mp) {
-        if (songTitle == null || songTitle.isEmpty()) return;
-
         lastNotificationChange = System.currentTimeMillis();
         mp.start();
         
@@ -149,11 +144,9 @@ public class MusicService extends Service implements
         return false;
     }
 
-    // --- ВОТ МЕТОД, КОТОРОГО НЕ ХВАТАЛО ---
     public int getAudioSessionId() {
         return player != null ? player.getAudioSessionId() : 0;
     }
-    // ---------------------------------------
 
     public String playSong() {
         if (player == null) initMusicPlayer();
@@ -217,7 +210,7 @@ public class MusicService extends Service implements
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setTicker(songTitle)
                 .setOngoing(true)
-                .setContentTitle("Playing")
+                .setContentTitle("Music")
                 .setContentText(songTitle)
                 .setContentIntent(pendInt)
                 .setPriority(NotificationCompat.PRIORITY_LOW);
@@ -297,14 +290,14 @@ public class MusicService extends Service implements
     }
 
     public String playPrev() {
-        if (songs == null || songs.isEmpty()) return getString(R.string.no_songs);
+        if (songs == null || songs.isEmpty()) return "No songs";
         songPosn--;
         if (songPosn < 0) songPosn = songs.size() - 1;
         return playSong();
     }
 
     public String playNext() {
-        if (songs == null || songs.isEmpty()) return getString(R.string.no_songs);
+        if (songs == null || songs.isEmpty()) return "No songs";
         songPosn++;
         if (songPosn >= songs.size()) songPosn = 0;
         return playSong();
