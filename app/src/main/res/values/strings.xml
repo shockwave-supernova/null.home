@@ -6,14 +6,14 @@
     <string name="output_about">Francesco Andreuzzi (Italy)\n\t-> Programmer
         \n\nThanks to Luke Winward for his original idea</string>
     <string name="output_refresh">Refresh: apps, alias, music, contacts, rss feeds</string>
-    <string name="output_rate">Thank you!</string>
+    
     <string name="start_notification">null.home started</string>
     <string name="tui_running">null.home is running</string>
     <string name="admin_permission">Lock the screen on double tap</string>
     <string name="tui_reset">null.home reset to default settings</string>
     <string name="copied">Copied:</string>
     <string name="tui_busy">null.home is busy, use \"ctrlc\" to stop the process</string>
-    <string name="donate">Do you like this work? Please support the original author (cmd: $ donate). Thank you!</string>
+    
     <string name="open_file_chooser">Open file with...</string>
 
     <string name="weather_cant_update">You can\'t perform a manual update with the default key. You have to create a custom key on the website</string>
@@ -58,12 +58,9 @@
     <string name="tuinotfound_xmlprefs">Your xml preferences couldn\'t be loaded because your \"null.home\" folder is not readable at the moment (you should try to use the command \"restart\")</string>
 
     <string-array name="hints">
-        <item name="hint_twitter">Did you know? The original T-UI is on Twitter. Have a look (\"$ tui -twitter\")</item>
-        <item name="hint_telegram">Did you know? There\'s a Telegram group with many enthusiastic users, where you can discuss, share and chat (\"$ tui -telegram\")</item>
-        <item name="hint_googlep">Did you know? Our official Google+ community is full of tips, experimental apks and discussions (\"$ tui -googlep\")</item>
         <item name="hint_tutorial">Did you read the tutorial? (\"$ tutorial\")</item>
         <item name="hint_theme">Did you know that you can easily switch your theme? Have a look at the cmd \"$ theme\"</item>
-        <item name="hint_theme2">Did you know? You can create your custom theme and share it with other users. Have a look at the cmd \"$ theme -create\"</item>
+        <item name="hint_theme2">Did you know? You can create your custom theme. Have a look at the cmd \"$ theme -create\"</item>
         <item name="hint_help">Doubts about a command? Use \"$ help cmdName\"</item>
         <item name="hint_music">Did you know? You can listen to music using null.home. Have a look at the cmd \"$ music\"</item>
         <item name="hint_appgroups">Did you know? null.home introduced App Groups.\nYou can get more details with the cmd \"$ apps -tutorial\"</item>
@@ -83,9 +80,7 @@
         <item>Launch your apps typing their name</item>
         <item>You can call your contacts with the cmd \"call contactName\"</item>
         <item>null.home is highly customizable. Check \"config -ls\" or use the cmd \"config -tutorial\" to see what you can change</item>
-        <item>You can choose within a large database of themes. Check the cmd \"theme -view\"</item>
-        <item>Join the original community! Google+, Twitter, Telegram and GitHub. Use the cmd \"tui\"</item>
-    </string-array>
+        </string-array>
 
     <string name="output_appnotfound">Application not found</string>
     <string name="activity_not_found">Activity not found</string>
@@ -245,7 +240,7 @@
     </string>
     <string name="help_data">Toggle mobile data</string>
     <string name="help_devutils">There\'s nothing interesting there</string>
-    <string name="help_donate">Offer a coffee to the developer (PayPal only)</string>
+    
     <string name="help_flash">Toggle the flashlight</string>
     <string name="help_help">Print the available commands, or info about a command
         \n\nUsage:
@@ -275,7 +270,7 @@
         \n-lock [id] OR [text] -> lock an existing note
         \n-unlock [id] OR [text] -> unlock an existing note
         \n-tutorial -> open the tutorial page on GitHub</string>
-    <string name="help_rate">Leave a feedback on the Play Store page</string>
+    
     <string name="help_refresh">Refresh apps, alias, music, contacts</string>
     <string name="help_regex">-add [ID] [regex] -> add a new regex with the given ID
         \n-rm [ID] -> remove the regex with the given ID
@@ -300,10 +295,9 @@
         \n-use [shortcutID OR shortcut index] [optional: appName] -> use the specified shortcut
         \n-cp [index] [appName] -> copy to clipboard the nth shortcut of the selected app (first: 0)</string>
     <string name="help_status">Get info about battery charge, wifi status and mobile data</string>
-    <string name="help_theme">-apply [name] -> apply the selected theme (case sensitive). require internet connection. may take some seconds
+    <string name="help_theme">-apply [name] -> apply the selected theme (case sensitive). may take some seconds
         \n-old -> re-apply the theme that was replaced by the current one
         \n-standard -> apply the standard theme
-        \n-view -> view the available themes
         \n-create -> create a new theme</string>
     <string name="help_time">Print the current time with the given format
         \n\nUsage:
@@ -317,9 +311,6 @@
         \n-reset -> removes the null.home folder and resets default settings (restart required)
         \n-log [fileName] -> log the text on screen to the file
         \n-priority [command] [int] -> set the priority of the selected command
-        \n-twitter -> show T-UI Twitter page
-        \n-googlep -> show the community on Google+
-        \n-telegram -> open the official Telegram group
         \n-sourcecode -> open the GitHub page
         \n-folder -> print the path of the null.home folder</string>
     <string name="help_tuinotes">-add [line] [text] -> add a new note at the specified line (the note will be appended if line is omitted)

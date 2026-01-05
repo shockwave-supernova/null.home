@@ -1,34 +1,13 @@
 package ohi.andre.consolelauncher.commands.main.raw;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
-import android.content.Intent;
-import android.net.Uri;
-
-import ohi.andre.consolelauncher.R;
 import ohi.andre.consolelauncher.commands.CommandAbstraction;
 import ohi.andre.consolelauncher.commands.ExecutePack;
-import ohi.andre.consolelauncher.commands.main.MainPack;
 
 public class rate implements CommandAbstraction {
 
     @Override
-    public String exec(ExecutePack pack) {
-        final MainPack info = (MainPack) pack;
-        try {
-            info.context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" +
-                    info.context.getPackageName())));
-        } catch (android.content.ActivityNotFoundException anfe) {
-            info.context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" +
-                    info.context.getPackageName())));
-        }
-
-        return info.res.getString(R.string.output_rate);
-    }
-
-    @Override
-    public int helpRes() {
-        return R.string.help_rate;
+    public String exec(ExecutePack info) throws Exception {
+        return "Feature disabled in this fork.";
     }
 
     @Override
@@ -38,17 +17,21 @@ public class rate implements CommandAbstraction {
 
     @Override
     public int priority() {
-        return 3;
+        return 0;
     }
 
     @Override
-    public String onNotArgEnough(ExecutePack info, int nArgs) {
-        return null;
+    public int helpRes() {
+        return 0;
     }
 
     @Override
-    public String onArgNotFound(ExecutePack info, int index) {
-        return null;
+    public String onArgNotFound(ExecutePack pack, int indexNotFound) {
+        return "Argument not found";
     }
 
+    @Override
+    public String onNotArgEnough(ExecutePack pack, int nArgs) {
+        return "Not enough arguments";
+    }
 }

@@ -94,7 +94,7 @@ public class MessagesManager {
             count = 0;
 
             if(donate) {
-                Tuils.sendOutput(color, context, R.string.donate);
+                // Tuils.sendOutput(color, context, R.string.donate);
             } else {
                 if(copy.size() == 0) {
                     copy = new ArrayList<>(original);

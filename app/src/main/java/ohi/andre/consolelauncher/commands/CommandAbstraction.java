@@ -1,16 +1,15 @@
 package ohi.andre.consolelauncher.commands;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
 public interface CommandAbstraction {
 
-    //	arg type
+    // Argument Types (Legacy int constants)
     int PLAIN_TEXT = 10;
     int FILE = 11;
     int VISIBLE_PACKAGE = 12;
     int CONTACTNUMBER = 13;
     int TEXTLIST = 14;
     int SONG = 15;
+    // 16 пропущен
     int COMMAND = 17;
     int PARAM = 18;
     int BOOLEAN = 19;
@@ -28,10 +27,16 @@ public interface CommandAbstraction {
     int BOUND_REPLY_APP = 31;
     int DATASTORE_PATH_TYPE = 32;
 
+    // Methods
     String exec(ExecutePack pack) throws Exception;
+    
     int[] argType();
+    
     int priority();
+    
     int helpRes();
+    
     String onArgNotFound(ExecutePack pack, int indexNotFound);
+    
     String onNotArgEnough(ExecutePack pack, int nArgs);
 }
