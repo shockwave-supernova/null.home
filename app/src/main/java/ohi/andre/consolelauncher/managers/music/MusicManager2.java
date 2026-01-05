@@ -3,7 +3,6 @@ package ohi.andre.consolelauncher.managers.music;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -27,11 +26,6 @@ import ohi.andre.consolelauncher.managers.xml.XMLPrefsManager;
 import ohi.andre.consolelauncher.managers.xml.options.Behavior;
 import ohi.andre.consolelauncher.tuils.Tuils;
 
-/**
- * Created by francescoandreuzzi on 17/08/2017.
- * Updated/Refactored for modern Android standards.
- */
-
 public class MusicManager2 implements MediaController.MediaPlayerControl {
 
     public static final String[] MUSIC_EXTENSIONS = {".mp3", ".wav", ".ogg", ".flac", ".m4a", ".aac"};
@@ -51,7 +45,6 @@ public class MusicManager2 implements MediaController.MediaPlayerControl {
     private boolean playbackPaused = true;
     private boolean stopped = true;
 
-    // Используем Executor вместо Thread для переиспользования потоков
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private int waitingMethod = 0;
@@ -60,7 +53,6 @@ public class MusicManager2 implements MediaController.MediaPlayerControl {
     private final BroadcastReceiver headsetBroadcast = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            // 0 = unplugged, 1 = plugged
             if (intent.getIntExtra("state", -1) == 0) {
                 pause();
             }
@@ -74,11 +66,9 @@ public class MusicManager2 implements MediaController.MediaPlayerControl {
             musicSrv = binder.getService();
             musicSrv.setShuffle(XMLPrefsManager.getBoolean(Behavior.random_play));
             
-            // Передаем песни в сервис
             musicSrv.setList(songs);
             musicBound = true;
 
-            // Выполняем отложенное действие
             switch (waitingMethod) {
                 case WAITING_NEXT:
                     playNext();
@@ -105,14 +95,10 @@ public class MusicManager2 implements MediaController.MediaPlayerControl {
     };
 
     public MusicManager2(Context c) {
-        // Используем Application Context для ресивера, чтобы избежать утечек
         mContext = c.getApplicationContext(); 
-        
         updateSongs();
 
         String action = AudioManager.ACTION_HEADSET_PLUG;
-        // Регистрация ресивера. На новых Android лучше делать это динамически, но для наушников это работает.
-        // Используем флаг экспорта для Android 14+ если потребуется, но для системных экшенов это обычно не нужно в этом контексте
         try {
             mContext.registerReceiver(headsetBroadcast, new IntentFilter(action));
         } catch (Exception e) {
@@ -139,14 +125,11 @@ public class MusicManager2 implements MediaController.MediaPlayerControl {
     }
 
     public void refresh() {
-        // Не обязательно полностью уничтожать сервис для обновления списка песен
         updateSongs();
     }
 
     public void destroy() {
         if (musicSrv != null && musicBound) {
-            // Останавливаем сервис только если это действительно нужно
-            // musicSrv.stop(); // Обычно мы хотим, чтобы музыка играла в фоне
             try {
                 mContext.unbindService(musicConnection);
             } catch (Exception e) {
@@ -155,19 +138,8 @@ public class MusicManager2 implements MediaController.MediaPlayerControl {
             musicBound = false;
         }
         
-        // playIntent не останавливаем, чтобы музыка играла при выходе из лаунчера (если так задумано)
-        // Если нужно убить музыку при выходе - раскомментируйте:
-        /*
-        if (playIntent != null) {
-            mContext.stopService(playIntent);
-            playIntent = null;
-        }
-        */
-
         try {
             mContext.unregisterReceiver(headsetBroadcast);
-        } catch (IllegalArgumentException e) {
-            // Ресивер не был зарегистрирован или уже удален
         } catch (Exception e) {
             Tuils.log(e);
         }
@@ -265,13 +237,11 @@ public class MusicManager2 implements MediaController.MediaPlayerControl {
                     }
                 }
 
-                // Обновляем список атомарно
                 synchronized (songs) {
                     songs.clear();
                     songs.addAll(loadedSongs);
                 }
                 
-                // Если сервис уже подключен, обновляем список и там
                 if (musicSrv != null) {
                     musicSrv.setList(songs);
                 }
@@ -286,36 +256,22 @@ public class MusicManager2 implements MediaController.MediaPlayerControl {
         ContentResolver musicResolver = mContext.getContentResolver();
         Uri musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         
-        // Проекция для запроса (оптимизация)
         String[] projection = {
                 MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.ARTIST
+                MediaStore.Audio.Media.TITLE
         };
         
-        // Фильтр для музыки
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
-
-        // Сортировка
         String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
 
         try (Cursor musicCursor = musicResolver.query(musicUri, projection, selection, null, sortOrder)) {
             if (musicCursor != null && musicCursor.moveToFirst()) {
                 int titleColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
                 int idColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media._ID);
-                int artistColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
 
                 do {
                     long thisId = musicCursor.getLong(idColumn);
                     String thisTitle = musicCursor.getString(titleColumn);
-                    String thisArtist = musicCursor.getString(artistColumn);
-                    
-                    // Создаем URI для проигрывания (полезно для новых API)
-                    Uri contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, thisId);
-                    
-                    // Предполагаем, что Song конструктор принимает (id, title) или (id, title, artist)
-                    // Если в Song нет поля для URI, старый подход с ID тоже сработает, 
-                    // если MusicService умеет с ним работать.
                     targetList.add(new Song(thisId, thisTitle)); 
                 } while (musicCursor.moveToNext());
             }
@@ -400,10 +356,8 @@ public class MusicManager2 implements MediaController.MediaPlayerControl {
         }
 
         int i = -1;
-        // Поиск песни. Можно оптимизировать Map-ом, если песен много, 
-        // но для списка в пару сотен линейный поиск OK.
         for (int index = 0; index < songs.size(); index++) {
-            if (songs.get(index).getTitle().equalsIgnoreCase(song)) { // equalsIgnoreCase лучше для поиска
+            if (songs.get(index).getTitle().equalsIgnoreCase(song)) {
                 i = index;
                 break;
             }

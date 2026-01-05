@@ -20,7 +20,6 @@ import android.provider.MediaStore;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.RemoteInput;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -75,7 +74,6 @@ public class MusicService extends Service implements
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // Если сервис перезапускается системой, и у нас нет данных, просто возвращаем STICKY
         if (songTitle == null || songTitle.isEmpty()) {
             return START_STICKY;
         }
@@ -115,15 +113,10 @@ public class MusicService extends Service implements
         
         player.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
         
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            player.setAudioAttributes(new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build());
-        } else {
-            // Для старых версий
-            // player.setAudioStreamType(AudioManager.STREAM_MUSIC); 
-        }
+        player.setAudioAttributes(new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build());
         
         player.setOnPreparedListener(this);
         player.setOnCompletionListener(this);
@@ -155,6 +148,12 @@ public class MusicService extends Service implements
         }
         return false;
     }
+
+    // --- ВОТ МЕТОД, КОТОРОГО НЕ ХВАТАЛО ---
+    public int getAudioSessionId() {
+        return player != null ? player.getAudioSessionId() : 0;
+    }
+    // ---------------------------------------
 
     public String playSong() {
         if (player == null) initMusicPlayer();
@@ -221,11 +220,8 @@ public class MusicService extends Service implements
                 .setContentTitle("Playing")
                 .setContentText(songTitle)
                 .setContentIntent(pendInt)
-                .setPriority(NotificationCompat.PRIORITY_LOW); // Чтобы не шумело
+                .setPriority(NotificationCompat.PRIORITY_LOW);
 
-        // Кнопка для команд (RemoteInput)
-        // В Android 12+ (S) для PendingIntent внутри уведомлений, которые запускают BroadcastReceiver,
-        // лучше использовать FLAG_MUTABLE, если мы хотим получать данные ввода.
         int broadcastFlags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             broadcastFlags |= PendingIntent.FLAG_MUTABLE; 
@@ -234,14 +230,12 @@ public class MusicService extends Service implements
         }
 
         String label = "cmd";
-        // RemoteInput поддерживается с API 20 (KitKat Watch), но NotificationCompat это обрабатывает
         RemoteInput remoteInput = new RemoteInput.Builder(PrivateIOReceiver.TEXT)
                 .setLabel(label)
                 .build();
 
         Intent i = new Intent(PublicIOReceiver.ACTION_CMD);
         i.putExtra(MainManager.MUSIC_SERVICE, true);
-        // Важно: setPackage чтобы интент точно пришел в наше приложение (защита на Android 14)
         i.setPackage(context.getPackageName());
 
         PendingIntent replyPendingIntent = PendingIntent.getBroadcast(
@@ -323,7 +317,9 @@ public class MusicService extends Service implements
     @Override
     public void onDestroy() {
         if (player != null) {
-            try { player.stop(); } catch (Exception e) {}
+            try { 
+                if (player.isPlaying()) player.stop(); 
+            } catch (Exception e) {}
             player.release();
             player = null;
         }
