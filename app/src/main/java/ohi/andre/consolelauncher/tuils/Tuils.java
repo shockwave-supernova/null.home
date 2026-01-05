@@ -26,6 +26,7 @@ import android.os.Parcelable;
 import android.os.Process;
 import android.os.StatFs;
 import android.provider.Settings;
+import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.content.res.ResourcesCompat;
@@ -51,7 +52,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream; // Был пропущен!
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -77,11 +78,11 @@ import ohi.andre.consolelauncher.managers.music.Song;
 import ohi.andre.consolelauncher.managers.notifications.NotificationService;
 import ohi.andre.consolelauncher.managers.xml.XMLPrefsManager;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsSave;
-import ohi.andre.consolelauncher.managers.xml.options.Behavior;
 import ohi.andre.consolelauncher.managers.xml.options.Ui;
 import ohi.andre.consolelauncher.tuils.interfaces.OnBatteryUpdate;
 import ohi.andre.consolelauncher.tuils.stuff.FakeLauncherActivity;
 
+@SuppressWarnings({"deprecation", "unused", "unchecked"})
 public class Tuils {
 
     public static final String SPACE = " ";
@@ -101,13 +102,17 @@ public class Tuils {
     public static double textCalculus(double input, String text) {
         Matcher m = calculusPattern.matcher(text);
         while (m.find()) {
-            char operator = m.group(1).charAt(0);
-            double value = Double.parseDouble(m.group(2));
+            String opGroup = m.group(1);
+            String valGroup = m.group(2);
+            if (opGroup == null || valGroup == null) continue;
+
+            char operator = opGroup.charAt(0);
+            double value = Double.parseDouble(valGroup);
             switch (operator) {
                 case '+': input += value; break;
                 case '-': input -= value; break;
                 case '*': input *= value; break;
-                case '/': input /= value; break;
+                case '/': if (value != 0) input /= value; break;
                 case '^': input = Math.pow(input, value); break;
             }
         }
@@ -147,10 +152,10 @@ public class Tuils {
         return null;
     }
 
-    @SuppressWarnings("deprecation")
     public static boolean notificationServiceIsRunning(Context context) {
         ComponentName collectorComponent = new ComponentName(context, NotificationService.class);
         ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        if (manager == null) return false;
         List<ActivityManager.RunningServiceInfo> runningServices = manager.getRunningServices(Integer.MAX_VALUE);
         if (runningServices == null) return false;
         for (ActivityManager.RunningServiceInfo service : runningServices) {
@@ -189,6 +194,7 @@ public class Tuils {
     }
 
     public static boolean containsExtension(String[] array, String value) {
+        if (value == null) return false;
         String val = value.toLowerCase().trim();
         for (String s : array) if (val.endsWith(s)) return true;
         return false;
@@ -244,20 +250,6 @@ public class Tuils {
     }
 
     // --- SPAN METHODS ---
-    
-    // ЭТОТ МЕТОД НУЖЕН RegexManager (line 206)
-    public static SpannableString span(int bgColor, int foreColor, CharSequence text) {
-        return span(null, bgColor, foreColor, text, Integer.MAX_VALUE);
-    }
-    
-    // ЭТОТ МЕТОД НУЖЕН RegexManager (line 213)
-    public static int span(int bgColor, SpannableString text, String section, int fromIndex) {
-        int index = text.toString().indexOf(section, fromIndex);
-        if(index == -1) return index;
-        text.setSpan(new BackgroundColorSpan(bgColor), index, index + section.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        return index + section.length();
-    }
-
     public static SpannableString span(CharSequence text, int color) {
         if (text == null) text = EMPTYSTRING;
         SpannableString ss = new SpannableString(text);
@@ -287,6 +279,17 @@ public class Tuils {
         if (foreColor != Integer.MAX_VALUE) ss.setSpan(new ForegroundColorSpan(foreColor), 0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         if (bgColor != Integer.MAX_VALUE) ss.setSpan(new BackgroundColorSpan(bgColor), 0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return ss;
+    }
+
+    public static SpannableString span(int bgColor, int foreColor, CharSequence text) {
+        return span(null, bgColor, foreColor, text, Integer.MAX_VALUE);
+    }
+
+    public static int span(int bgColor, SpannableString text, String section, int fromIndex) {
+        int index = text.toString().indexOf(section, fromIndex);
+        if(index == -1) return index;
+        text.setSpan(new BackgroundColorSpan(bgColor), index, index + section.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return index + section.length();
     }
 
     public static int convertSpToPixels(float sp, Context context) {
