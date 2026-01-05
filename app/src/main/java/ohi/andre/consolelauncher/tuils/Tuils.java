@@ -35,6 +35,7 @@ import android.provider.Settings;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.core.content.res.ResourcesCompat; // Добавлен импорт
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -123,7 +124,6 @@ public class Tuils {
     private static Typeface globalTypeface = null;
     public static String fontPath = null;
 
-    // Исправлен RegExp (лишние экранирования)
     static Pattern calculusPattern = Pattern.compile("([+\\-*/^])(\\d+\\.?\\d*)");
     public static double textCalculus(double input, String text) {
         Matcher m = calculusPattern.matcher(text);
@@ -320,7 +320,7 @@ public class Tuils {
         }
     }
 
-    public static float dpToPx(Context context, int valueInDp) {
+    public static float dpToPx(Context context, float valueInDp) {
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
         return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, valueInDp, metrics);
     }
@@ -481,8 +481,8 @@ public class Tuils {
                 Field fCursorDrawable = editor.getClass().getDeclaredField("mCursorDrawable");
                 fCursorDrawable.setAccessible(true);
                 Drawable[] drawables = new Drawable[2];
-                drawables[0] = ContextCompat.getDrawable(editText.getContext(), mCursorDrawableRes);
-                drawables[1] = ContextCompat.getDrawable(editText.getContext(), mCursorDrawableRes);
+                drawables[0] = ResourcesCompat.getDrawable(editText.getResources(), mCursorDrawableRes, null);
+                drawables[1] = ResourcesCompat.getDrawable(editText.getResources(), mCursorDrawableRes, null);
                 if (drawables[0] != null) drawables[0].setColorFilter(color, PorterDuff.Mode.SRC_IN);
                 if (drawables[1] != null) drawables[1].setColorFilter(color, PorterDuff.Mode.SRC_IN);
                 fCursorDrawable.set(editor, drawables);
