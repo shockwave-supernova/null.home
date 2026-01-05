@@ -4,11 +4,6 @@ import java.io.File;
 
 import it.andreuzzi.comparestring2.StringableObject;
 
-/**
- * Created by francescoandreuzzi on 17/08/2017.
- * Refactored for stability.
- */
-
 public class Song implements StringableObject {
 
     private final long id;
