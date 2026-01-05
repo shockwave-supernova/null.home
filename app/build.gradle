@@ -1,0 +1,59 @@
+plugins {
+    alias(libs.plugins.android.application)
+}
+
+android {
+    // ВАЖНО: Имя пакета
+    namespace 'ohi.andre.consolelauncher'
+    compileSdk 34
+
+    // --- ВОТ ЭТОГО НЕ ХВАТАЛО 👇 ---
+    buildFeatures {
+        buildConfig true
+    }
+    // -----------------------------
+
+    defaultConfig {
+        applicationId "ohi.andre.consolelauncher"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    // Стандартные библиотеки
+    implementation libs.appcompat
+    implementation libs.material
+
+    // Библиотеки для совместимости (исправляют ошибки импортов)
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
+    implementation 'net.minidev:json-smart:2.5.0'
+
+    // --- БИБЛИОТЕКИ T-UI ---
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'net.sourceforge.htmlcleaner:htmlcleaner:2.26'
+    implementation 'com.jayway.jsonpath:json-path:2.9.0'
+    implementation 'org.jsoup:jsoup:1.17.2'
+    implementation 'it.andreuzzi:CompareString2:1.0.9'
+
+    // Тесты
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+}
