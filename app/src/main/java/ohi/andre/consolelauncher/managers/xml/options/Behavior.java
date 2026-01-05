@@ -1,7 +1,5 @@
 package ohi.andre.consolelauncher.managers.xml.options;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
 import android.os.Environment;
 
 import java.io.File;
@@ -9,11 +7,9 @@ import java.io.File;
 import ohi.andre.consolelauncher.managers.xml.XMLPrefsManager;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsElement;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsSave;
+import ohi.andre.consolelauncher.managers.xml.options.Theme;
+import ohi.andre.consolelauncher.managers.xml.options.Ui;
 import ohi.andre.consolelauncher.tuils.Tuils;
-
-/**
- * Created by francescoandreuzzi on 24/09/2017.
- */
 
 public enum Behavior implements XMLPrefsSave {
 
@@ -25,7 +21,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If true, t-ui will lock the screen on double tap";
+            return "If true, null.home will lock the screen on double tap";
         }
 
         @Override
@@ -89,7 +85,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If true, t-ui will get tracks from the system mediastore";
+            return "If true, null.home will get tracks from the system mediastore";
         }
 
         @Override
@@ -105,7 +101,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If true, there will always be a notification in your status bar, telling you that t-ui is running";
+            return "If true, there will always be a notification in your status bar, telling you that null.home is running";
         }
 
         @Override
@@ -121,7 +117,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If true, your keyboard will be shown everytime you go back to t-ui";
+            return "If true, your keyboard will be shown everytime you go back to null.home";
         }
 
         @Override
@@ -153,7 +149,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If true, t-ui will tell you some useful hints sometime";
+            return "If true, null.home will tell you some useful hints sometime";
         }
 
         @Override
@@ -185,7 +181,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If false, t-ui won't show the apps that you launch";
+            return "If false, null.home won't show the apps that you launch";
         }
 
         @Override
@@ -441,7 +437,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If false, you won't be able to launch apps from t-ui, unless you use \"apps -frc\"";
+            return "If false, you won't be able to launch apps from null.home, unless you use \"apps -frc\"";
         }
 
         @Override
@@ -505,7 +501,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If true, if you pass a lower number of parameters to an alias, t-ui will use the first one to replace the others";
+            return "If true, if you pass a lower number of parameters to an alias, null.home will use the first one to replace the others";
         }
 
         @Override
@@ -552,7 +548,7 @@ public enum Behavior implements XMLPrefsSave {
             if(path == null) return Tuils.EMPTYSTRING;
 
             File file = new File(path);
-            if(file != null && file.exists()) return file.getAbsolutePath();
+            if(file.exists()) return file.getAbsolutePath();
 
             return Tuils.EMPTYSTRING;
         }
@@ -623,7 +619,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If true, you will be able to use t-ui as a music player. Otherwise, the music command will try to communicate with the music player that your using";
+            return "If true, you will be able to use null.home as a music player. Otherwise, the music command will try to communicate with the music player that your using";
         }
 
         @Override
@@ -639,7 +635,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "A value which is used to tell how deep t-ui can go in a nested optional value";
+            return "A value which is used to tell how deep null.home can go in a nested optional value";
         }
 
         @Override
@@ -666,12 +662,12 @@ public enum Behavior implements XMLPrefsSave {
     tui_notification_title {
         @Override
         public String defaultValue() {
-            return "T-UI";
+            return "null.home";
         }
 
         @Override
         public String info() {
-            return "The title of the T-UI notification";
+            return "The title of the null.home notification";
         }
 
         @Override
@@ -682,12 +678,12 @@ public enum Behavior implements XMLPrefsSave {
     tui_notification_subtitle {
         @Override
         public String defaultValue() {
-            return "T-UI is running";
+            return "null.home is running";
         }
 
         @Override
         public String info() {
-            return "The subtitle of the T-UI notification";
+            return "The subtitle of the null.home notification";
         }
 
         @Override
@@ -703,7 +699,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "The command ran when the T-UI notification is clicked";
+            return "The command ran when the null.home notification is clicked";
         }
 
         @Override
@@ -719,7 +715,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If false, the click on the T-UI notification won't bring you to your phone home";
+            return "If false, the click on the null.home notification won't bring you to your phone home";
         }
 
         @Override
@@ -735,7 +731,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "The number of used commands that will appear inside the T-UI notification (<0 will disable the feature)";
+            return "The number of used commands that will appear inside the null.home notification (<0 will disable the feature)";
         }
 
         @Override
@@ -767,7 +763,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "The priority of the T-UI notification (min: -2, max: 2)";
+            return "The priority of the null.home notification (min: -2, max: 2)";
         }
 
         @Override
@@ -847,7 +843,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If true, t-ui will automatically append a quote before a file inserted clicking on a suggestion";
+            return "If true, null.home will automatically append a quote before a file inserted clicking on a suggestion";
         }
 
         @Override
@@ -863,7 +859,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "The separator between two optional values (doesn\'t affect notification optional values)";
+            return "The separator between two optional values (doesn't affect notification optional values)";
         }
 
         @Override
@@ -959,7 +955,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "The time color inside the t-ui notification";
+            return "The time color inside the null.home notification";
         }
 
         @Override
@@ -975,7 +971,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "The input color inside the t-ui notification";
+            return "The input color inside the null.home notification";
         }
 
         @Override
@@ -1055,7 +1051,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If true, t-ui will clear the screen when you lock the phone";
+            return "If true, null.home will clear the screen when you lock the phone";
         }
 
         @Override
@@ -1167,7 +1163,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "The weather update time in seconds. This can only be used if you\'re using a custom weather key";
+            return "The weather update time in seconds. This can only be used if you're using a custom weather key";
         }
 
         @Override
@@ -1215,7 +1211,7 @@ public enum Behavior implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If false, t-ui won't show information about the weather in the output field";
+            return "If false, null.home won't show information about the weather in the output field";
         }
 
         @Override

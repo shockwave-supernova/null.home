@@ -1,7 +1,5 @@
 package ohi.andre.consolelauncher.managers.xml;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
 import android.content.Context;
 import android.graphics.Color;
 
@@ -44,14 +42,15 @@ public class XMLPrefsManager {
     public static final String XML_DEFAULT = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     public static final String VALUE_ATTRIBUTE = "value";
 
-    private static DocumentBuilderFactory factory;
+    private static final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     private static DocumentBuilder builder;
 
     static {
-        factory = DocumentBuilderFactory.newInstance();
         try {
             builder = factory.newDocumentBuilder();
-        } catch (ParserConfigurationException e) {}
+        } catch (ParserConfigurationException e) {
+            Tuils.log(e);
+        }
     }
 
     public enum XMLPrefsRoot implements XMLPrefsElement {
@@ -93,17 +92,12 @@ public class XMLPrefsManager {
             }
         };
 
-//        notifications
-//        apps
-//        alias
-
-        public String path;
-        XMLPrefsList values;
-        public List<XMLPrefsSave> enums;
+        public final String path;
+        final XMLPrefsList values;
+        public final List<XMLPrefsSave> enums;
 
         XMLPrefsRoot(XMLPrefsSave[] en) {
             this.values = new XMLPrefsList();
-
             this.enums = new ArrayList<>(Arrays.asList(en));
             this.path = this.name().toLowerCase() + ".xml";
         }
@@ -127,7 +121,6 @@ public class XMLPrefsManager {
 
     public static void dispose() {
         commonsLoaded = false;
-
         for(XMLPrefsRoot element : XMLPrefsRoot.values()) {
             element.values.list.clear();
         }
@@ -168,9 +161,7 @@ public class XMLPrefsManager {
             Document d = (Document) o[0];
             Element root = (Element) o[1];
 
-//            we are keeping this because maybe there are some new values to write
             List<XMLPrefsSave> enums = new ArrayList<>(element.enums);
-
             String[] deleted = element.delete();
             boolean needToWrite = false;
 
@@ -179,8 +170,13 @@ public class XMLPrefsManager {
                 try {
                     d = builder.parse(file);
                 } catch (Exception e) {}
-                root = (Element) d.getElementsByTagName(element.name()).item(0);
+                if (d != null) {
+                    root = (Element) d.getElementsByTagName(element.name()).item(0);
+                }
             }
+            
+            if (root == null) continue;
+
             NodeList nodes = root.getElementsByTagName("*");
 
             for(int count = 0; count < nodes.getLength(); count++) {
@@ -189,7 +185,12 @@ public class XMLPrefsManager {
 
                 String value;
                 try {
-                    value = node.getAttributes().getNamedItem(VALUE_ATTRIBUTE).getNodeValue();
+                    Node attr = node.getAttributes().getNamedItem(VALUE_ATTRIBUTE);
+                    if (attr != null) {
+                        value = attr.getNodeValue();
+                    } else {
+                        continue;
+                    }
                 } catch (Exception e) {
                     continue;
                 }
@@ -206,19 +207,14 @@ public class XMLPrefsManager {
                             for(String temp : iv) {
                                 if(temp.equals(value)) {
                                     value = opt.defaultValue();
-
-                                    Element em = (Element) node;
-                                    em.setAttribute(VALUE_ATTRIBUTE, value);
-
+                                    ((Element) node).setAttribute(VALUE_ATTRIBUTE, value);
                                     needToWrite = true;
-
                                     break;
                                 }
                             }
                         }
 
                         element.values.add(nn, value);
-
                         check = true;
                         break;
                     }
@@ -228,28 +224,22 @@ public class XMLPrefsManager {
                     int index = Tuils.find(nn, deleted);
                     if(index != -1) {
                         deleted[index] = null;
-                        Element e = (Element) node;
-                        root.removeChild(e);
-
+                        root.removeChild(node);
                         needToWrite = true;
                     }
                 }
-
-
             }
 
-            if(enums.size() == 0) {
+            if(enums.isEmpty()) {
                 if(needToWrite) writeTo(d, file);
                 continue;
             }
 
             for(XMLPrefsSave s : enums) {
                 String value = s.defaultValue();
-
                 Element em = d.createElement(s.label());
                 em.setAttribute(VALUE_ATTRIBUTE, value);
                 root.appendChild(em);
-
                 element.values.add(s.label(), value);
             }
 
@@ -258,7 +248,7 @@ public class XMLPrefsManager {
     }
 
     public static Object transform(String s, Class<?> c) throws Exception {
-        if(s == null) throw new UnsupportedOperationException();
+        if(s == null) throw new UnsupportedOperationException("String value is null");
 
         if(c == int.class) return Integer.parseInt(s);
         if(c == Color.class) return Color.parseColor(s);
@@ -267,11 +257,9 @@ public class XMLPrefsManager {
         if(c == float.class) return Float.parseFloat(s);
         if(c == double.class) return Double.parseDouble(s);
         if(c == File.class) {
-            if(s.length() == 0) return null;
-
+            if(s.isEmpty()) return null;
             File file = new File(s);
-            if(!file.exists()) throw new UnsupportedOperationException();
-
+            if(!file.exists()) throw new UnsupportedOperationException("File does not exist: " + s);
             return file;
         }
 
@@ -301,10 +289,9 @@ public class XMLPrefsManager {
             return (int) transform(prefsSave.parent().getValues().get(prefsSave).value, Color.class);
         } catch (Exception e) {
             String def = prefsSave.defaultValue();
-            if(def == null || def.length() == 0) {
+            if(def == null || def.isEmpty()) {
                 return Integer.MAX_VALUE;
             }
-
             try {
                 return (int) transform(def, Color.class);
             } catch (Exception e1) {
@@ -317,6 +304,7 @@ public class XMLPrefsManager {
         return get(prefsSave);
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> T get(Class<T> c, XMLPrefsRoot root, String s) {
         try {
             return (T) transform(root.getValues().get(s).value, c);
@@ -325,23 +313,16 @@ public class XMLPrefsManager {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> T get(Class<T> c, XMLPrefsSave prefsSave) {
         try {
-//            if(prefsSave.is(Notifications.show_notifications.label())) {
-//                Tuils.log("----------------");
-//                Tuils.log("label", prefsSave.label());
-//                Tuils.log("parent", prefsSave.parent().toString());
-//                Tuils.log("values tostring", prefsSave.parent().getValues().toString());
-//            }
             return (T) transform(prefsSave.parent().getValues().get(prefsSave).value, c);
         } catch (Exception e) {
             Tuils.log(e);
-//            this will happen if the option is not found
             try {
                 return (T) transform(prefsSave.defaultValue(), c);
             } catch (Exception e1) {
                 Tuils.log(e1);
-//                attempts to get a default value for the given type, as we say in italian, "the last beach"
                 return Tuils.getDefaultValue(c);
             }
         }
@@ -361,22 +342,16 @@ public class XMLPrefsManager {
     }
 
     static final Pattern p1 = Pattern.compile(">");
-//    static final Pattern p2 = Pattern.compile("</");
     static final Pattern p3 = Pattern.compile("\n\n");
     static final String p1s = ">" + Tuils.NEWLINE;
-//    static final String p2s = "\n</";
     static final String p3s = Tuils.NEWLINE;
 
     public static String fixNewlines(String s) {
         s = p1.matcher(s).replaceAll(p1s);
-//        s = p2.matcher(s).replaceAll(p2s);
         s = p3.matcher(s).replaceAll(p3s);
         return s;
     }
 
-//    rootName is needed in order to rebuild the file if it's corrupted
-//    [0] = document
-//    [1] = root
     public static Object[] buildDocument(File file, String rootName) throws Exception {
         if(!file.exists()) {
             resetFile(file, rootName);
@@ -387,7 +362,6 @@ public class XMLPrefsManager {
             d = builder.parse(file);
         } catch (Exception e) {
             Tuils.log(e);
-
             int nOfBytes = Tuils.nOfBytes(file);
             if(nOfBytes == 0 && rootName != null) {
                 XMLPrefsManager.resetFile(file, rootName);
@@ -411,17 +385,15 @@ public class XMLPrefsManager {
 
             String s = fixNewlines(writer.toString());
 
-            FileOutputStream stream = new FileOutputStream(f);
-            stream.write(s.getBytes());
-
-            stream.flush();
-            stream.close();
+            try (FileOutputStream stream = new FileOutputStream(f)) {
+                stream.write(s.getBytes());
+                stream.flush();
+            }
         } catch (Exception e) {
             Tuils.log(e);
         }
     }
 
-//    this will only add, it won't check if there's already one
     public static String add(File file, String elementName, String[] attributeNames, String[] attributeValues) {
         try {
             Object[] o;
@@ -458,15 +430,14 @@ public class XMLPrefsManager {
     public static String set(File file, String elementName, String[] thatHasThose, String[] forValues, String[] attributeNames, String[] attributeValues, boolean addIfNotFound) {
         String[][] values = new String[1][attributeValues.length];
         values[0] = attributeValues;
-
         return setMany(file, new String[] {elementName}, thatHasThose, forValues, attributeNames, values, addIfNotFound);
     }
 
-    public static String setMany(File file, String elementNames[], String[] attributeNames, String[][] attributeValues) {
+    public static String setMany(File file, String[] elementNames, String[] attributeNames, String[][] attributeValues) {
         return setMany(file, elementNames, null, null, attributeNames, attributeValues, true);
     }
 
-    public static String setMany(File file, String elementNames[], String[] thatHasThose, String[] forValues, String[] attributeNames, String[][] attributeValues, boolean addIfNotFound) {
+    public static String setMany(File file, String[] elementNames, String[] thatHasThose, String[] forValues, String[] attributeNames, String[][] attributeValues, boolean addIfNotFound) {
         try {
             Object[] o;
             try {
@@ -507,7 +478,6 @@ public class XMLPrefsManager {
                         }
 
                         elementNames[c] = null;
-
                         continue Main;
                     }
                 }
@@ -515,8 +485,7 @@ public class XMLPrefsManager {
 
             if(nFound < elementNames.length) {
                 for (int count = 0; count < elementNames.length; count++) {
-                    if (elementNames[count] == null || elementNames[count].length() == 0) continue;
-
+                    if (elementNames[count] == null || elementNames[count].isEmpty()) continue;
                     if (!addIfNotFound) continue;
 
                     Element element = d.createElement(elementNames[count]);
@@ -539,7 +508,6 @@ public class XMLPrefsManager {
         }
     }
 
-//    return "" if node not found, null if all good
     public static String removeNode(File file, String nodeName) {
         return removeNode(file, nodeName, null, null);
     }
@@ -570,7 +538,7 @@ public class XMLPrefsManager {
     }
 
     public static String removeNode(File file, String[] thatHasThose, String[] forValues) {
-        return removeNode(file, thatHasThose, forValues, false,false);
+        return removeNode(file, thatHasThose, forValues, false, false);
     }
 
     public static String removeNode(File file, String[] thatHasThose, String[] forValues, boolean alsoNotFound, boolean all) {
@@ -587,12 +555,10 @@ public class XMLPrefsManager {
             Element root = (Element) o[1];
 
             NodeList list = root.getElementsByTagName("*");
-
             boolean check = false;
 
             for(int c = 0; c < list.getLength(); c++) {
                 Node n = list.item(c);
-
                 if(!(n instanceof Element)) continue;
                 Element e = (Element) n;
 
@@ -604,7 +570,6 @@ public class XMLPrefsManager {
             }
 
             writeTo(d, file);
-
             return check ? null : Tuils.EMPTYSTRING;
         } catch (Exception e) {
             return e.toString();
@@ -626,14 +591,12 @@ public class XMLPrefsManager {
             }
 
             Element root = (Element) o[1];
-
             return findNode(root, nodeName, thatHasThose, forValues);
         } catch (Exception e) {
             return null;
         }
     }
 
-//    useful only if you're looking for a single node
     public static Node findNode(Element root, String nodeName, String[] thatHasThose, String[] forValues) {
         NodeList nodes = root.getElementsByTagName(nodeName);
         for(int j = 0; j < nodes.getLength(); j++) if(checkAttributes((Element) nodes.item(j), thatHasThose, forValues, false)) return nodes.item(j);
@@ -646,12 +609,10 @@ public class XMLPrefsManager {
 
     public static List<Node> findNodes(Element root, String nodeName, String[] thatHasThose, String[] forValue) {
         NodeList nodes = root.getElementsByTagName(nodeName != null ? nodeName : "*");
-
         List<Node> nodeList = new ArrayList<>();
 
         for(int c = 0; c < nodes.getLength(); c++) {
             Node n = nodeList.get(c);
-
             if(!(n instanceof Element)) continue;
             Element e = (Element) n;
 
@@ -659,7 +620,6 @@ public class XMLPrefsManager {
                 nodeList.add(n);
             }
         }
-
         return nodeList;
     }
 
@@ -721,15 +681,12 @@ public class XMLPrefsManager {
     }
 
     public static boolean resetFile(File f, String name) {
-        try {
+        try (FileOutputStream stream = new FileOutputStream(f)) {
             if(f.exists()) f.delete();
-
-            FileOutputStream stream = new FileOutputStream(f);
             stream.write(XML_DEFAULT.getBytes());
             stream.write(("<" + name + ">\n").getBytes());
             stream.write(("</" + name + ">\n").getBytes());
             stream.flush();
-            stream.close();
             return true;
         } catch (Exception e) {
             return false;
@@ -752,7 +709,6 @@ public class XMLPrefsManager {
     public static boolean getBooleanAttribute(Element e, String attribute) {
         String s = getStringAttribute(e, attribute);
         return s != null && Boolean.parseBoolean(s);
-
     }
 
     public static int getIntAttribute(Element e, String attribute) {
@@ -780,79 +736,4 @@ public class XMLPrefsManager {
             this.id = id;
         }
     }
-
-//    private static HashMap<XMLPrefsSave, String> getOld(BufferedReader reader) {
-//        HashMap<XMLPrefsSave, String> map = new HashMap<>();
-//
-//        String line;
-//        try {
-//            while((line = reader.readLine()) != null) {
-//                String[] split = line.split("=");
-//                if(split.length != 2) continue;
-//
-//                String name = split[0].trim();
-//                String value = split[1];
-//
-//                XMLPrefsSave s = getCorresponding(name);
-//                if(s == null) continue;
-//
-//                map.put(s, value);
-//            }
-//        } catch (IOException e) {
-//            return null;
-//        }
-//
-//        return map;
-//    }
-
-//    static final SimpleMutableEntry[] OLD = {
-//            new SimpleMutableEntry("deviceColor", Theme.device_color),
-//            new SimpleMutableEntry("inputColor", Theme.input_color),
-//            new SimpleMutableEntry("outputColor", Theme.output_color),
-//            new SimpleMutableEntry("backgroundColor", Theme.bg_color),
-//            new SimpleMutableEntry("useSystemFont", Ui.system_font),
-//            new SimpleMutableEntry("fontSize", Ui.font_size),
-//            new SimpleMutableEntry("ramColor", Theme.ram_color),
-//            new SimpleMutableEntry("inputFieldBottom", Ui.input_bottom),
-//            new SimpleMutableEntry("username", Ui.username),
-//            new SimpleMutableEntry("showSubmit", Ui.show_enter_button),
-//            new SimpleMutableEntry("deviceName", Ui.deviceName),
-//            new SimpleMutableEntry("showRam", Ui.show_ram),
-//            new SimpleMutableEntry("showDevice", Ui.show_device_name),
-//            new SimpleMutableEntry("showToolbar", Toolbar.show_toolbar),
-//
-//            new SimpleMutableEntry("suggestionTextColor", Suggestions.default_text_color),
-//            new SimpleMutableEntry("transparentSuggestions", Suggestions.transparent),
-//            new SimpleMutableEntry("aliasSuggestionBg", Suggestions.alias_bg_color),
-//            new SimpleMutableEntry("appSuggestionBg", Suggestions.apps_bg_color),
-//            new SimpleMutableEntry("commandSuggestionsBg", Suggestions.cmd_bg_color),
-//            new SimpleMutableEntry("songSuggestionBg", Suggestions.song_bg_color),
-//            new SimpleMutableEntry("contactSuggestionBg", Suggestions.contact_bg_color),
-//            new SimpleMutableEntry("fileSuggestionBg", Suggestions.file_bg_color),
-//            new SimpleMutableEntry("defaultSuggestionBg", Suggestions.default_bg_color),
-//
-//            new SimpleMutableEntry("useSystemWallpaper", Ui.system_wallpaper),
-//            new SimpleMutableEntry("fullscreen", Ui.fullscreen),
-//            new SimpleMutableEntry("keepAliveWithNotification", Behavior.tui_notification),
-//            new SimpleMutableEntry("openKeyboardOnStart", Behavior.auto_show_keyboard),
-//
-//            new SimpleMutableEntry("fromMediastore", Behavior.songs_from_mediastore),
-//            new SimpleMutableEntry("playRandom", Behavior.random_play),
-//            new SimpleMutableEntry("songsFolder", Behavior.songs_folder),
-//
-//            new SimpleMutableEntry("closeOnDbTap", Behavior.double_tap_closes),
-//            new SimpleMutableEntry("showSuggestions", Suggestions.show_suggestions),
-//            new SimpleMutableEntry("showDonationMessage", Behavior.donation_message),
-//            new SimpleMutableEntry("showAliasValue", Behavior.show_alias_content),
-//            new SimpleMutableEntry("showAppsHistory", Behavior.show_launch_history),
-//
-//            new SimpleMutableEntry("defaultSearch", Cmd.default_search)
-//    };
-//
-//    private static XMLPrefsSave getCorresponding(String old) {
-//        for(SimpleMutableEntry<String, XMLPrefsSave> s : OLD) {
-//            if(old.equals(s.getKey())) return s.getValue();
-//        }
-//        return null;
-//    }
 }

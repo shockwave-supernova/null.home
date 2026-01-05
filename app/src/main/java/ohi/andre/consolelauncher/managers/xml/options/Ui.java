@@ -1,16 +1,10 @@
 package ohi.andre.consolelauncher.managers.xml.options;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
 import android.os.Build;
 
 import ohi.andre.consolelauncher.managers.xml.XMLPrefsManager;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsElement;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsSave;
-
-/**
- * Created by francescoandreuzzi on 24/09/2017.
- */
 
 public enum Ui implements XMLPrefsSave {
 
@@ -43,7 +37,7 @@ public enum Ui implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If false, the default t-ui font (\"Lucida Console\") will be used for all texts";
+            return "If false, the default null.home font (\"Lucida Console\") will be used for all texts";
         }
     },
     ram_size {
@@ -379,7 +373,7 @@ public enum Ui implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If true, t-ui will run in fullscreen mode";
+            return "If true, null.home will run in fullscreen mode";
         }
     },
     device_index {
@@ -678,7 +672,7 @@ public enum Ui implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If false, the restart message won\'t be shown";
+            return "If false, the restart message won't be shown";
         }
 
         @Override

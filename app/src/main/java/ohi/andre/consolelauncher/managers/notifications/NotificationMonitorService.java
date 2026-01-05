@@ -1,11 +1,5 @@
 package ohi.andre.consolelauncher.managers.notifications;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
-/**
- * Created by francescoandreuzzi on 03/09/2017.
- */
-
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -13,7 +7,6 @@ import android.content.pm.PackageManager;
 import android.os.IBinder;
 
 import ohi.andre.consolelauncher.tuils.Tuils;
-
 
 public class NotificationMonitorService extends Service {
 
@@ -29,12 +22,18 @@ public class NotificationMonitorService extends Service {
     }
 
     private void ensureCollectorRunning() {
-        if(Tuils.notificationServiceIsRunning(this)) toggleNotificationListenerService();
+        // Если сервис уведомлений уже запущен, мы его "передергиваем" (выкл/вкл),
+        // чтобы система переподключилась к нему. Это решает проблемы с зависанием листенера.
+        if (Tuils.notificationServiceIsRunning(this)) {
+            toggleNotificationListenerService();
+        }
     }
 
     private void toggleNotificationListenerService() {
         ComponentName thisComponent = new ComponentName(this, NotificationService.class);
         PackageManager pm = getPackageManager();
+        
+        // Отключаем и сразу включаем компонент, чтобы заставить систему перезапустить биндинг
         pm.setComponentEnabledSetting(thisComponent, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
         pm.setComponentEnabledSetting(thisComponent, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
     }

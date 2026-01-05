@@ -1,31 +1,33 @@
 package ohi.andre.consolelauncher.managers.notifications.reply;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
 import it.andreuzzi.comparestring2.StringableObject;
-
-/**
- * Created by francescoandreuzzi on 24/01/2018.
- */
 
 public class BoundApp implements StringableObject {
 
-    public int applicationId;
-    public String label, packageName;
+    public final int applicationId;
+    public final String label;
+    public final String packageName;
 
-    String lowercaseLabel;
+    private final String lowercaseLabel;
 
     public BoundApp(int applicationId, String packageName, String label) {
         this.applicationId = applicationId;
         this.packageName = packageName;
         this.label = label;
-
         this.lowercaseLabel = label.toLowerCase();
     }
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof BoundApp && applicationId == ((BoundApp) obj).applicationId;
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        BoundApp boundApp = (BoundApp) obj;
+        return applicationId == boundApp.applicationId;
+    }
+
+    @Override
+    public int hashCode() {
+        return applicationId;
     }
 
     @Override

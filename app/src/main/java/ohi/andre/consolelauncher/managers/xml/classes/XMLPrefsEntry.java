@@ -1,11 +1,5 @@
 package ohi.andre.consolelauncher.managers.xml.classes;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
-/**
- * Created by francescoandreuzzi on 06/03/2018.
- */
-
 public class XMLPrefsEntry {
 
     public String key, value;
@@ -17,9 +11,19 @@ public class XMLPrefsEntry {
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof XMLPrefsEntry) return this == obj;
-        else if(obj instanceof XMLPrefsSave) return this.key.equals(((XMLPrefsSave) obj).label());
-        return obj.equals(key);
+        if(this == obj) return true;
+        if(obj instanceof XMLPrefsEntry) {
+            XMLPrefsEntry other = (XMLPrefsEntry) obj;
+            return this.key.equals(other.key); 
+        } else if(obj instanceof XMLPrefsSave) {
+            return this.key.equals(((XMLPrefsSave) obj).label());
+        }
+        return false;
+    }
+    
+    @Override
+    public int hashCode() {
+        return key.hashCode();
     }
 
     @Override

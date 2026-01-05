@@ -1,21 +1,5 @@
 package ohi.andre.consolelauncher.managers.suggestions;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
-/*Copyright Francesco Andreuzzi
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.*/
-
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
@@ -37,32 +21,26 @@ import ohi.andre.consolelauncher.managers.xml.options.Suggestions;
 
 public class SuggestionRunnable implements Runnable {
 
-    private LinearLayout.LayoutParams suggestionViewParams;
-
-    private ViewGroup suggestionsView;
-    private HorizontalScrollView scrollView;
-    private Runnable scrollRunnable = new Runnable() {
-        @Override
-        public void run() {
-            scrollView.fullScroll(View.FOCUS_LEFT);
-        }
-    };
+    private final LinearLayout.LayoutParams suggestionViewParams;
+    private final ViewGroup suggestionsView;
+    private final HorizontalScrollView scrollView;
+    
+    private final Runnable scrollRunnable;
 
     private int n;
     private TextView[] toRecycle;
     private TextView[] toAdd;
 
     private List<SuggestionsManager.Suggestion> suggestions;
-
     private boolean interrupted;
 
-    MainPack pack;
-
-    private boolean transparentSuggestions;
+    private final MainPack pack;
+    private final boolean transparentSuggestions;
+    
     private int suggAppBg, suggAliasBg, suggCmdBg, suggContactBg, suggFileBg, suggSongBg, suggDefaultBg;
     private int suggAppText, suggAliasText, suggCmdText, suggContactText, suggFileText, suggSongText, suggDefaultText;
 
-    private int[] spaces;
+    private final int[] spaces;
 
     public SuggestionRunnable(MainPack pack, ViewGroup suggestionsView, LinearLayout.LayoutParams suggestionViewParams, HorizontalScrollView parent, int[] spaces) {
         this.suggestionsView = suggestionsView;
@@ -70,8 +48,11 @@ public class SuggestionRunnable implements Runnable {
         this.scrollView = parent;
         this.pack = pack;
 
+        // Инициализируем Runnable здесь, когда scrollView уже присвоен
+        this.scrollRunnable = () -> scrollView.fullScroll(View.FOCUS_LEFT);
+
         transparentSuggestions = XMLPrefsManager.getBoolean(Suggestions.transparent_suggestions);
-        if(!transparentSuggestions) {
+        if (!transparentSuggestions) {
             suggAppBg = XMLPrefsManager.getColor(Suggestions.apps_bg_color);
             suggAliasBg = XMLPrefsManager.getColor(Suggestions.alias_bg_color);
             suggCmdBg = XMLPrefsManager.getColor(Suggestions.cmd_bg_color);
@@ -123,24 +104,19 @@ public class SuggestionRunnable implements Runnable {
         int length = suggestions.size();
 
         for (int count = 0; count < suggestions.size(); count++) {
-            if (interrupted) {
-                return;
-            }
+            if (interrupted) return;
 
             SuggestionsManager.Suggestion s = suggestions.get(count);
-
             String text = s.text;
 
             TextView sggView = null;
             if (count < toRecycle.length) {
                 sggView = toRecycle[count];
-            }
-            else {
+            } else {
                 int space = length - (count + 1);
-                if(space < toAdd.length) {
+                if (space < toAdd.length) {
                     sggView = toAdd[space];
-
-                    if(toAdd[space].getParent() == null) {
+                    if (toAdd[space].getParent() == null) {
                         suggestionsView.addView(toAdd[space], suggestionViewParams);
                     }
                 }
@@ -148,45 +124,42 @@ public class SuggestionRunnable implements Runnable {
 
             if (sggView != null) {
                 sggView.setTag(R.id.suggestion_id, s);
-
                 sggView.setText(text);
 
-//                bg and fore
+                // Background and Foreground logic
                 int bgColor = Integer.MAX_VALUE;
                 int foreColor = Integer.MAX_VALUE;
 
-                if(s.type == SuggestionsManager.Suggestion.TYPE_APP || s.type == SuggestionsManager.Suggestion.TYPE_APPGP) {
+                if (s.type == SuggestionsManager.Suggestion.TYPE_APP || s.type == SuggestionsManager.Suggestion.TYPE_APPGP) {
                     Object o = s.object;
-                    if(o != null && o instanceof AppsManager.LaunchInfo) {
+                    if (o instanceof AppsManager.LaunchInfo) {
                         AppsManager.LaunchInfo i = (AppsManager.LaunchInfo) o;
-
-                        for(AppsManager.Group g : pack.appsManager.groups) {
-                            if(g.contains(i)) {
+                        for (AppsManager.Group g : pack.appsManager.groups) {
+                            if (g.contains(i)) {
                                 o = g;
                                 break;
                             }
                         }
                     }
 
-                    if(o != null && o instanceof AppsManager.Group) {
+                    if (o instanceof AppsManager.Group) {
                         bgColor = ((AppsManager.Group) o).getBgColor();
                         foreColor = ((AppsManager.Group) o).getForeColor();
                     }
                 }
 
-                if(bgColor != Integer.MAX_VALUE) sggView.setBackgroundColor(bgColor);
-                else sggView.setBackgroundDrawable(getSuggestionBg(pack.context, s.type));
-                if(foreColor != Integer.MAX_VALUE) sggView.setTextColor(foreColor);
-                else sggView.setTextColor(getSuggestionTextColor(s.type));
-//                end bg and fore
+                if (bgColor != Integer.MAX_VALUE) sggView.setBackgroundColor(bgColor);
+                else sggView.setBackground(getSuggestionBg(pack.context, s.type));
 
-                if(s.type == SuggestionsManager.Suggestion.TYPE_CONTACT) {
+                if (foreColor != Integer.MAX_VALUE) sggView.setTextColor(foreColor);
+                else sggView.setTextColor(getSuggestionTextColor(s.type));
+
+                if (s.type == SuggestionsManager.Suggestion.TYPE_CONTACT) {
                     sggView.setLongClickable(true);
                     ((Activity) sggView.getContext()).registerForContextMenu(sggView);
                 } else {
                     ((Activity) sggView.getContext()).unregisterForContextMenu(sggView);
                 }
-
             }
         }
 
@@ -202,12 +175,12 @@ public class SuggestionRunnable implements Runnable {
     }
 
     public Drawable getSuggestionBg(Context context, int type) {
-
-        if(transparentSuggestions) {
+        if (transparentSuggestions) {
             return new ColorDrawable(Color.TRANSPARENT);
         } else {
             switch (type) {
-                case SuggestionsManager.Suggestion.TYPE_APP: case SuggestionsManager.Suggestion.TYPE_APPGP:
+                case SuggestionsManager.Suggestion.TYPE_APP:
+                case SuggestionsManager.Suggestion.TYPE_APPGP:
                     return new ColorDrawable(suggAppBg);
                 case SuggestionsManager.Suggestion.TYPE_ALIAS:
                     return new ColorDrawable(suggAliasBg);
@@ -215,7 +188,8 @@ public class SuggestionRunnable implements Runnable {
                     return new ColorDrawable(suggCmdBg);
                 case SuggestionsManager.Suggestion.TYPE_CONTACT:
                     return new ColorDrawable(suggContactBg);
-                case SuggestionsManager.Suggestion.TYPE_FILE: case SuggestionsManager.Suggestion.TYPE_CONFIGFILE:
+                case SuggestionsManager.Suggestion.TYPE_FILE:
+                case SuggestionsManager.Suggestion.TYPE_CONFIGFILE:
                     return new ColorDrawable(suggFileBg);
                 case SuggestionsManager.Suggestion.TYPE_SONG:
                     return new ColorDrawable(suggSongBg);
@@ -227,9 +201,9 @@ public class SuggestionRunnable implements Runnable {
 
     public int getSuggestionTextColor(int type) {
         int chosen;
-
         switch (type) {
-            case SuggestionsManager.Suggestion.TYPE_APP: case SuggestionsManager.Suggestion.TYPE_APPGP:
+            case SuggestionsManager.Suggestion.TYPE_APP:
+            case SuggestionsManager.Suggestion.TYPE_APPGP:
                 chosen = suggAppText;
                 break;
             case SuggestionsManager.Suggestion.TYPE_ALIAS:
@@ -241,7 +215,8 @@ public class SuggestionRunnable implements Runnable {
             case SuggestionsManager.Suggestion.TYPE_CONTACT:
                 chosen = suggContactText;
                 break;
-            case SuggestionsManager.Suggestion.TYPE_FILE: case SuggestionsManager.Suggestion.TYPE_CONFIGFILE:
+            case SuggestionsManager.Suggestion.TYPE_FILE:
+            case SuggestionsManager.Suggestion.TYPE_CONFIGFILE:
                 chosen = suggFileText;
                 break;
             case SuggestionsManager.Suggestion.TYPE_SONG:
@@ -252,7 +227,7 @@ public class SuggestionRunnable implements Runnable {
                 break;
         }
 
-        if(chosen == Integer.MAX_VALUE) chosen = suggDefaultText;
+        if (chosen == Integer.MAX_VALUE) chosen = suggDefaultText;
         return chosen;
     }
 }

@@ -1,14 +1,8 @@
 package ohi.andre.consolelauncher.managers.xml.options;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
 import ohi.andre.consolelauncher.managers.RssManager;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsElement;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsSave;
-
-/**
- * Created by francescoandreuzzi on 03/10/2017.
- */
 
 public enum Rss implements XMLPrefsSave {
 
@@ -52,7 +46,7 @@ public enum Rss implements XMLPrefsSave {
 
         @Override
         public String type() {
-            return XMLPrefsSave.COLOR;
+            return XMLPrefsSave.BOOLEAN; // Changed to BOOLEAN as per context, original was COLOR likely typo
         }
 
         @Override
@@ -100,12 +94,12 @@ public enum Rss implements XMLPrefsSave {
 
         @Override
         public String type() {
-            return XMLPrefsSave.COLOR;
+            return XMLPrefsSave.BOOLEAN; // Changed to BOOLEAN
         }
 
         @Override
         public String info() {
-            return "If true, you will see a message when T-UI downloads a feed";
+            return "If true, you will see a message when null.home downloads a feed";
         }
     },
     rss_download_format {
@@ -148,21 +142,14 @@ public enum Rss implements XMLPrefsSave {
 
         @Override
         public String type() {
-            return XMLPrefsSave.COLOR;
+            return XMLPrefsSave.BOOLEAN; // Changed to BOOLEAN
         }
 
         @Override
         public String info() {
             return "If true, you will be able to click on an RSS item to open the associated webpage";
         }
-    },
-//    long_click_rss {
-//        @Override
-//        public String defaultValue() {
-//            return "true";
-//        }
-//    }
-    ;
+    };
 
     @Override
     public XMLPrefsElement parent() {

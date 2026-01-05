@@ -1,25 +1,19 @@
 package ohi.andre.consolelauncher.managers.notifications;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
-/**
- * Created by francescoandreuzzi on 27/04/2017.
- */
-
-import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
-import androidx.core.app.NotificationCompat;
 import android.text.TextUtils;
+
+import androidx.core.app.NotificationCompat;
 
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
@@ -41,16 +35,14 @@ import ohi.andre.consolelauncher.managers.xml.options.Notifications;
 import ohi.andre.consolelauncher.tuils.StoppableThread;
 import ohi.andre.consolelauncher.tuils.Tuils;
 
-
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class NotificationService extends NotificationListenerService {
 
     public static final String DESTROY = "destroy";
 
     private final int UPDATE_TIME = 2000;
-    private String LINES_LABEL = "Lines";
-    private String ANDROID_LABEL_PREFIX = "android.";
-    private String NULL_LABEL = "null";
+    private final String LINES_LABEL = "Lines";
+    private final String ANDROID_LABEL_PREFIX = "android.";
+    private final String NULL_LABEL = "null";
 
     HashMap<String, List<Notification>> pastNotifications;
     Handler handler = new Handler();
@@ -75,7 +67,6 @@ public class NotificationService extends NotificationListenerService {
     @Override
     public void onCreate() {
         super.onCreate();
-
         init();
     }
 
@@ -99,13 +90,12 @@ public class NotificationService extends NotificationListenerService {
             public void run() {
                 super.run();
 
-                if(!enabled) return;
+                if (!enabled) return;
 
-                while(true) {
-                    if(isInterrupted()) return;
+                while (true) {
+                    if (isInterrupted()) return;
 
-                    if(queue != null) {
-
+                    if (queue != null) {
                         StatusBarNotification sbn;
                         while ((sbn = queue.poll()) != null) {
 
@@ -133,56 +123,53 @@ public class NotificationService extends NotificationListenerService {
                             }
 
                             String f;
-                            if(nApp != null && nApp.format != null) f = nApp.format;
+                            if (nApp != null && nApp.format != null) f = nApp.format;
                             else f = format;
 
                             int textColor;
-                            if(nApp != null && nApp.color != null) textColor = Color.parseColor(nApp.color);
+                            if (nApp != null && nApp.color != null) textColor = Color.parseColor(nApp.color);
                             else textColor = color;
 
                             CharSequence s = Tuils.span(f, textColor);
-
                             Bundle bundle = NotificationCompat.getExtras(notification);
 
-                            if(bundle != null) {
+                            if (bundle != null) {
                                 Matcher m = formatPattern.matcher(s);
                                 String match;
-                                while(m.find()) {
+                                while (m.find()) {
                                     match = m.group(0);
                                     if (!match.startsWith(PKG) && !match.startsWith(APP) && !match.startsWith(NEWLINE) && !timePattern.matcher(match).matches()) {
                                         String length = m.group(1);
                                         String color = m.group(2);
                                         String value = m.group(3);
 
-                                        if(value == null || value.length() == 0) value = m.group(4);
+                                        if (value == null || value.length() == 0) value = m.group(4);
 
-                                        if(value != null) value = value.trim();
+                                        if (value != null) value = value.trim();
                                         else continue;
 
-                                        if(value.length() == 0) continue;
+                                        if (value.length() == 0) continue;
 
-                                        if(value.equals("ttl")) value = "title";
-                                        else if(value.equals("txt")) value = "text";
+                                        if (value.equals("ttl")) value = "title";
+                                        else if (value.equals("txt")) value = "text";
 
                                         String[] temp = value.split(":"), split;
-//                                    this is an other way to do what I did in NotesManager for footer/header
-                                        if(value.endsWith(":")) {
+                                        if (value.endsWith(":")) {
                                             split = new String[temp.length + 1];
                                             System.arraycopy(temp, 0, split, 0, temp.length);
                                             split[split.length - 1] = Tuils.EMPTYSTRING;
                                         } else split = temp;
 
-//                                    because the last one is the default text, but only if there is more than one label
                                         int stopAt = split.length;
-                                        if(stopAt > 1) stopAt--;
+                                        if (stopAt > 1) stopAt--;
 
                                         CharSequence text = null;
-                                        for(int j = 0; j < stopAt; j++) {
-                                            if(split[j].contains(LINES_LABEL)) {
+                                        for (int j = 0; j < stopAt; j++) {
+                                            if (split[j].contains(LINES_LABEL)) {
                                                 CharSequence[] array = bundle.getCharSequenceArray(ANDROID_LABEL_PREFIX + split[j]);
-                                                if(array != null) {
-                                                    for(CharSequence c : array) {
-                                                        if(text == null) text = c;
+                                                if (array != null) {
+                                                    for (CharSequence c : array) {
+                                                        if (text == null) text = c;
                                                         else text = TextUtils.concat(text, Tuils.NEWLINE, c);
                                                     }
                                                 }
@@ -190,10 +177,10 @@ public class NotificationService extends NotificationListenerService {
                                                 text = bundle.getCharSequence(ANDROID_LABEL_PREFIX + split[j]);
                                             }
 
-                                            if(text != null && text.length() > 0) break;
+                                            if (text != null && text.length() > 0) break;
                                         }
 
-                                        if(text == null || text.length() == 0) {
+                                        if (text == null || text.length() == 0) {
                                             text = split.length == 1 ? NULL_LABEL : split[split.length - 1];
                                         }
 
@@ -201,8 +188,9 @@ public class NotificationService extends NotificationListenerService {
 
                                         try {
                                             int l = Integer.parseInt(length);
-                                            stringed = stringed.substring(0,l);
-                                        } catch (Exception e) {}
+                                            stringed = stringed.substring(0, l);
+                                        } catch (Exception e) {
+                                        }
 
                                         try {
                                             text = Tuils.span(stringed, Color.parseColor(color));
@@ -210,31 +198,27 @@ public class NotificationService extends NotificationListenerService {
                                             text = stringed;
                                         }
 
-                                        s = TextUtils.replace(s, new String[] {m.group(0)}, new CharSequence[] {text});
+                                        s = TextUtils.replace(s, new String[]{m.group(0)}, new CharSequence[]{text});
                                     }
                                 }
                             }
 
                             String text = s.toString();
 
-                            if(notificationManager.match(text)) continue;
+                            if (notificationManager.match(text)) continue;
 
                             int found = isInPastNotifications(pack, text);
-//                        if(found == 0) {
-//                            Tuils.log("app " + pack, pastNotifications.get(pack).toString());
-//                        }
+                            if (found == 2) continue;
 
-                            if(found == 2) continue;
-
-//                        else
                             Notification n = new Notification(System.currentTimeMillis(), text, pack, notification.contentIntent);
 
-                            if(found == 1) {
+                            if (found == 1) {
                                 List<Notification> ns = new ArrayList<>();
                                 ns.add(n);
                                 pastNotifications.put(pack, ns);
-                            } else if(found == 0) {
-                                pastNotifications.get(pack).add(n);
+                            } else if (found == 0) {
+                                List<Notification> list = pastNotifications.get(pack);
+                                if (list != null) list.add(n);
                             }
 
                             s = TextUtils.replace(s, new String[]{PKG, APP, NEWLINE}, new CharSequence[]{pack, appName, Tuils.NEWLINE});
@@ -252,19 +236,15 @@ public class NotificationService extends NotificationListenerService {
                                 Tuils.log(e);
                             }
 
-//                        Tuils.log("text", text);
-//                        Tuils.log("--------");
-
                             Tuils.sendOutput(NotificationService.this.getApplicationContext(), s, TerminalManager.CATEGORY_NO_COLOR, click ? notification.contentIntent : null, longClick ? n : null);
 
-                            if(replyManager != null) replyManager.onNotification(sbn, s);
+                            if (replyManager != null) replyManager.onNotification(sbn, s);
                         }
                     }
 
                     try {
                         sleep(UPDATE_TIME);
                     } catch (InterruptedException e) {
-                        Tuils.log(e);
                         return;
                     }
                 }
@@ -289,12 +269,13 @@ public class NotificationService extends NotificationListenerService {
             public void run() {
                 long now = System.currentTimeMillis();
 
-                for (Map.Entry<String, List<Notification>> entry : pastNotifications.entrySet()) {
-                    List<Notification> notifications = entry.getValue();
-
-                    Iterator<Notification> it = notifications.iterator();
-                    while (it.hasNext()) {
-                        if (now - it.next().time >= UPDATE_TIME) it.remove();
+                if (pastNotifications != null) {
+                    for (Map.Entry<String, List<Notification>> entry : pastNotifications.entrySet()) {
+                        List<Notification> notifications = entry.getValue();
+                        Iterator<Notification> it = notifications.iterator();
+                        while (it.hasNext()) {
+                            if (now - it.next().time >= UPDATE_TIME) it.remove();
+                        }
                     }
                 }
 
@@ -310,36 +291,44 @@ public class NotificationService extends NotificationListenerService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(intent != null) {
+        if (intent != null) {
             boolean destroy = intent.getBooleanExtra(DESTROY, false);
-            if(destroy) dispose();
+            if (destroy) dispose();
         }
 
-        if(!active) init();
+        if (!active) init();
 
         return START_STICKY;
     }
 
+    @Override
+    public IBinder onBind(Intent intent) {
+        if (!active) init();
+        return super.onBind(intent);
+    }
+
     private void dispose() {
-        if(replyManager != null) {
+        if (replyManager != null) {
             replyManager.dispose(this);
             replyManager = null;
         }
 
-        if(notificationManager != null) {
+        if (notificationManager != null) {
             notificationManager.dispose();
             notificationManager = null;
         }
 
-        bgThread.interrupt();
-        bgThread = null;
+        if (bgThread != null) {
+            bgThread.interrupt();
+            bgThread = null;
+        }
 
-        if(pastNotifications != null) {
+        if (pastNotifications != null) {
             pastNotifications.clear();
             pastNotifications = null;
         }
 
-        if(queue != null) {
+        if (queue != null) {
             queue.clear();
             queue = null;
         }
@@ -350,31 +339,32 @@ public class NotificationService extends NotificationListenerService {
     @Override
     public void onDestroy() {
         super.onDestroy();
-
-//        ondestroy won't ever be called
+        dispose();
     }
 
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
-        if(!enabled) return;
-
+        if (!enabled || queue == null) return;
         queue.offer(sbn);
     }
 
-//    0 = not found
-//    1 = the app wasnt found -> this is the first notification from this app
-//    2 = found
+    // 0 = not found
+    // 1 = the app wasn't found -> this is the first notification from this app
+    // 2 = found
     private int isInPastNotifications(String pkg, String text) {
         try {
+            if (pastNotifications == null) return 0;
             List<Notification> notifications = pastNotifications.get(pkg);
-            if(notifications == null) return 1;
-            for(Notification n : notifications) if(n.text.equals(text)) return 2;
-        } catch (ConcurrentModificationException e) {}
+            if (notifications == null) return 1;
+            for (Notification n : notifications) if (n.text.equals(text)) return 2;
+        } catch (ConcurrentModificationException e) {
+        }
         return 0;
     }
 
     @Override
-    public void onNotificationRemoved(StatusBarNotification sbn) {}
+    public void onNotificationRemoved(StatusBarNotification sbn) {
+    }
 
     public static class Notification implements Parcelable {
         public long time;

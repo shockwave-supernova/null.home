@@ -1,22 +1,16 @@
 package ohi.andre.consolelauncher.managers.suggestions;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
 import android.text.Editable;
 import android.text.TextWatcher;
 
 import ohi.andre.consolelauncher.tuils.interfaces.OnTextChanged;
 
-/**
- * Created by francescoandreuzzi on 06/03/2018.
- */
-
 public class SuggestionTextWatcher implements TextWatcher {
 
-    SuggestionsManager suggestionsManager;
-    OnTextChanged textChanged;
+    private final SuggestionsManager suggestionsManager;
+    private final OnTextChanged textChanged;
 
-    int before = Integer.MIN_VALUE;
+    private int before = Integer.MIN_VALUE;
 
     public SuggestionTextWatcher(SuggestionsManager suggestionsManager, OnTextChanged textChanged) {
         this.textChanged = textChanged;

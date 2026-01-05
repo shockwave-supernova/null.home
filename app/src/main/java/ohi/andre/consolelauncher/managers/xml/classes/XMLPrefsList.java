@@ -1,19 +1,13 @@
 package ohi.andre.consolelauncher.managers.xml.classes;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import ohi.andre.consolelauncher.tuils.Tuils;
 
-/**
- * Created by francescoandreuzzi on 06/03/2018.
- */
-
 public class XMLPrefsList {
 
-    public List<XMLPrefsEntry> list = new ArrayList<>();
+    public final List<XMLPrefsEntry> list = new ArrayList<>();
 
     public void add(XMLPrefsEntry entry) {
         list.add(entry);
@@ -25,7 +19,6 @@ public class XMLPrefsList {
 
     public XMLPrefsEntry get(Object o) {
         if(o instanceof Integer) return at((Integer) o);
-
         for(XMLPrefsEntry e : list) if(e.equals(o)) return e;
         return null;
     }
@@ -47,11 +40,9 @@ public class XMLPrefsList {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-
         for(XMLPrefsEntry entry : list) {
             builder.append(entry.key).append(" -> ").append(entry.value).append(Tuils.NEWLINE);
         }
-
         return builder.toString().trim();
     }
 }

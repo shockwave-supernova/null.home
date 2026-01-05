@@ -1,14 +1,8 @@
 package ohi.andre.consolelauncher.managers.xml.options;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
 import ohi.andre.consolelauncher.managers.xml.XMLPrefsManager;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsElement;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsSave;
-
-/**
- * Created by francescoandreuzzi on 24/09/2017.
- */
 
 public enum Suggestions implements XMLPrefsSave {
 
@@ -275,7 +269,7 @@ public enum Suggestions implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If true, t-ui will simulate a click on the current first suggestion if you double-click the space bar";
+            return "If true, null.home will simulate a click on the current first suggestion if you double-click the space bar";
         }
     },
     noinput_suggestions_order {
@@ -339,7 +333,7 @@ public enum Suggestions implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "The number of suggestions shown per category. This doesn\'t affect \"noinput_suggestions_order\" and \"suggestions_order\"";
+            return "The number of suggestions shown per category. This doesn't affect \"noinput_suggestions_order\" and \"suggestions_order\"";
         }
     },
     suggestions_deadline {
@@ -382,12 +376,12 @@ public enum Suggestions implements XMLPrefsSave {
 
         @Override
         public String type() {
-            return INTEGER;
+            return XMLPrefsSave.INTEGER;
         }
 
         @Override
         public String info() {
-            return "If the input is shorter than n characters, t-ui will try to show you the entries which start with those characters";
+            return "If the input is shorter than n characters, null.home will try to show you the entries which start with those characters";
         }
     },
     hide_suggestions_when_empty {

@@ -1,16 +1,8 @@
 package ohi.andre.consolelauncher.managers.xml.options;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
-import android.os.Build;
-
 import ohi.andre.consolelauncher.managers.notifications.reply.ReplyManager;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsElement;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsSave;
-
-/**
- * Created by francescoandreuzzi on 17/01/2018.
- */
 
 public enum Reply implements XMLPrefsSave {
 
@@ -33,8 +25,7 @@ public enum Reply implements XMLPrefsSave {
 
     @Override
     public XMLPrefsElement parent() {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) return ReplyManager.instance;
-        else return null;
+        return ReplyManager.instance;
     }
 
     @Override

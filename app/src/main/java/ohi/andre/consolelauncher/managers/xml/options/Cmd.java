@@ -1,14 +1,8 @@
 package ohi.andre.consolelauncher.managers.xml.options;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
 import ohi.andre.consolelauncher.managers.xml.XMLPrefsManager;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsElement;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsSave;
-
-/**
- * Created by francescoandreuzzi on 24/09/2017.
- */
 
 public enum Cmd implements XMLPrefsSave {
 

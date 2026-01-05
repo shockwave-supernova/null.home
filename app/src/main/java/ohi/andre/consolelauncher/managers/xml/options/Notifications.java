@@ -1,14 +1,8 @@
 package ohi.andre.consolelauncher.managers.xml.options;
 
-import ohi.andre.consolelauncher.BuildConfig;
-
 import ohi.andre.consolelauncher.managers.notifications.NotificationManager;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsElement;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsSave;
-
-/**
- * Created by francescoandreuzzi on 24/09/2017.
- */
 
 public enum Notifications implements XMLPrefsSave {
 
@@ -20,7 +14,7 @@ public enum Notifications implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If true, t-ui will show every incoming notification";
+            return "If true, null.home will show every incoming notification";
         }
     },
     app_notification_enabled_default {
@@ -31,7 +25,7 @@ public enum Notifications implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If true, t-ui will show notifications from all apps, unless they are explicitly excluded. If false, t-ui won't show a notification from a specific app unless it was \texplicitly included";
+            return "If true, null.home will show notifications from all apps, unless they are explicitly excluded. If false, null.home won't show a notification from a specific app unless it was explicitly included";
         }
     },
     default_notification_color {
@@ -74,7 +68,7 @@ public enum Notifications implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If true, T-UI will perform the operation associated with the original notification when you click it";
+            return "If true, null.home will perform the operation associated with the original notification when you click it";
         }
     },
     long_click_notification {
@@ -96,7 +90,7 @@ public enum Notifications implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If false, the \"Exclude app\" option won\'t be shown in the long click popup menu";
+            return "If false, the \"Exclude app\" option won't be shown in the long click popup menu";
         }
 
         @Override
@@ -112,7 +106,7 @@ public enum Notifications implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If false, the \"Exclude notification\" option won\'t be shown in the long click popup menu";
+            return "If false, the \"Exclude notification\" option won't be shown in the long click popup menu";
         }
 
         @Override
@@ -128,7 +122,7 @@ public enum Notifications implements XMLPrefsSave {
 
         @Override
         public String info() {
-            return "If false, the \"Reply to the last notification\" option won\'t be shown in the long click popup menu";
+            return "If false, the \"Reply to the last notification\" option won't be shown in the long click popup menu";
         }
 
         @Override
